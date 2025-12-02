@@ -5,9 +5,11 @@ import Index from "./pages/Index.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import SignupPage from "./pages/signup/page.tsx";
 import DashboardPage from "./pages/dashboard/page.tsx";
+import ProductsPage from "./pages/products/page.tsx";
 import ProductPage from "./pages/products/[id]/page.tsx";
 import SupplierProductsPage from "./pages/dashboard/products/page.tsx";
 import AddProductPage from "./pages/dashboard/products/add/page.tsx";
+import EditProductPage from "./pages/dashboard/products/edit/[id]/page.tsx";
 
 export default function App() {
   return (
@@ -18,9 +20,11 @@ export default function App() {
           <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/products" element={<ProductsPage />} />
           <Route path="/products/:id" element={<ProductPage />} />
           <Route path="/dashboard/products" element={<SupplierProductsPage />} />
           <Route path="/dashboard/products/add" element={<AddProductPage />} />
+          <Route path="/dashboard/products/edit/:id" element={<EditProductPage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

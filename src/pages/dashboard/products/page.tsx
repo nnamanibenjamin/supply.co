@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { useQuery } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api.js";
 import { Authenticated, AuthLoading, Unauthenticated } from "convex/react";
 import { Button } from "@/components/ui/button.tsx";
@@ -16,6 +17,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table.tsx";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog.tsx";
+import { toast } from "sonner";
+import type { Id } from "@/convex/_generated/dataModel.d.ts";
 
 export default function SupplierProductsPage() {
   return (
@@ -66,8 +79,35 @@ export default function SupplierProductsPage() {
 }
 
 function ProductsContent() {
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [productToDelete, setProductToDelete] = useState<Id<"products"> | null>(null);
+
   const currentUser = useQuery(api.auth.getCurrentUser);
   const products = useQuery(api.products.getSupplierProducts);
+  const deleteProduct = useMutation(api.products.deleteProduct);
+
+  const handleDeleteClick = (productId: Id<"products">) => {
+    setProductToDelete(productId);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!productToDelete) return;
+
+    try {
+      await deleteProduct({ productId: productToDelete });
+      toast.success("Product deleted successfully");
+    } catch (error) {
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error("Failed to delete product");
+      }
+    } finally {
+      setDeleteDialogOpen(false);
+      setProductToDelete(null);
+    }
+  };
 
   if (currentUser === undefined || products === undefined) {
     return (
@@ -200,7 +240,12 @@ function ProductsContent() {
                           <EditIcon className="h-4 w-4" />
                         </Button>
                       </Link>
-                      <Button variant="ghost" size="sm" className="text-destructive">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="text-destructive"
+                        onClick={() => handleDeleteClick(product._id)}
+                      >
                         <TrashIcon className="h-4 w-4" />
                       </Button>
                     </div>
@@ -211,6 +256,27 @@ function ProductsContent() {
           </Table>
         </Card>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Product</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this product? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

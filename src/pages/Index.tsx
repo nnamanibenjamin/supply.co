@@ -16,6 +16,7 @@ export default function Index() {
             <span className="text-xl font-bold">saline.co.ke</span>
           </div>
           <nav className="hidden md:flex items-center gap-6">
+            <Link to="/products" className="text-sm font-medium hover:text-primary transition-colors">Browse Products</Link>
             <a href="#how-it-works" className="text-sm font-medium hover:text-primary transition-colors">How It Works</a>
             <a href="#features" className="text-sm font-medium hover:text-primary transition-colors">Features</a>
             <Link to="/signup"><Button>Get Started</Button></Link>
@@ -235,8 +236,8 @@ export default function Index() {
               <h4 className="font-semibold mb-4">For Buyers</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li><a href="#" className="hover:text-foreground transition-colors">Create RFQ</a></li>
-                <li><a href="#" className="hover:text-foreground transition-colors">Search Products</a></li>
-                <li><a href="#" className="hover:text-foreground transition-colors">How It Works</a></li>
+                <li><Link to="/products" className="hover:text-foreground transition-colors">Browse Products</Link></li>
+                <li><a href="#how-it-works" className="hover:text-foreground transition-colors">How It Works</a></li>
               </ul>
             </div>
             

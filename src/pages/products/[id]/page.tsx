@@ -130,6 +130,11 @@ export default function ProductPage() {
                 {product.modelSku && (
                   <p className="text-sm text-muted-foreground">Model/SKU: {product.modelSku}</p>
                 )}
+                {product.supplier && (
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Supplied by <span className="font-medium">{product.supplier.companyName}</span>
+                  </p>
+                )}
               </div>
 
               <div className="border-y py-4">

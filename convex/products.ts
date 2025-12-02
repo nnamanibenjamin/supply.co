@@ -32,6 +32,45 @@ export const searchProducts = query({
   },
 });
 
+// Browse products (public - for products page)
+export const browseProducts = query({
+  args: {
+    categoryId: v.optional(v.id("categories")),
+  },
+  handler: async (ctx, args) => {
+    let products;
+
+    if (args.categoryId !== undefined) {
+      products = await ctx.db
+        .query("products")
+        .withIndex("by_category", (q) =>
+          q.eq("categoryId", args.categoryId!).eq("isActive", true)
+        )
+        .order("desc")
+        .take(100);
+    } else {
+      products = await ctx.db
+        .query("products")
+        .withIndex("by_active", (q) => q.eq("isActive", true))
+        .order("desc")
+        .take(100);
+    }
+
+    // Get category names
+    const productsWithCategories = await Promise.all(
+      products.map(async (product) => {
+        const category = await ctx.db.get(product.categoryId);
+        return {
+          ...product,
+          categoryName: category?.name || "Unknown",
+        };
+      })
+    );
+
+    return productsWithCategories;
+  },
+});
+
 // Get product by ID
 export const getProduct = query({
   args: { productId: v.id("products") },
