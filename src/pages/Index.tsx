@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button.tsx";
-import { Input } from "@/components/ui/input.tsx";
-import { SearchIcon, Building2Icon, PackageIcon, CheckCircle2Icon, ShieldCheckIcon, CreditCardIcon, BellIcon } from "lucide-react";
+import { Building2Icon, PackageIcon, CheckCircle2Icon, ShieldCheckIcon, CreditCardIcon, BellIcon, SearchIcon } from "lucide-react";
+import SearchBar from "./_components/SearchBar.tsx";
 
 export default function Index() {
   return (
@@ -37,13 +37,7 @@ export default function Index() {
 
           {/* Search Bar */}
           <div className="max-w-2xl mx-auto">
-            <div className="relative">
-              <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-              <Input 
-                placeholder="Search for medical equipment, supplies, pharmaceuticals..." 
-                className="pl-12 pr-4 py-6 text-lg"
-              />
-            </div>
+            <SearchBar />
             <p className="text-sm text-muted-foreground mt-2">
               Can't find what you need? Create a custom RFQ
             </p>
