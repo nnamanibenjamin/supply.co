@@ -10,6 +10,11 @@ import ProductPage from "./pages/products/[id]/page.tsx";
 import SupplierProductsPage from "./pages/dashboard/products/page.tsx";
 import AddProductPage from "./pages/dashboard/products/add/page.tsx";
 import EditProductPage from "./pages/dashboard/products/edit/[id]/page.tsx";
+import CreateRFQPage from "./pages/rfq/create/page.tsx";
+import HospitalRFQsPage from "./pages/dashboard/rfqs/page.tsx";
+import RFQDetailPage from "./pages/dashboard/rfqs/[id]/page.tsx";
+import SupplierRFQsPage from "./pages/dashboard/supplier-rfqs/page.tsx";
+import SubmitQuotePage from "./pages/dashboard/supplier-rfqs/[id]/quote/page.tsx";
 
 export default function App() {
   return (
@@ -25,6 +30,11 @@ export default function App() {
           <Route path="/dashboard/products" element={<SupplierProductsPage />} />
           <Route path="/dashboard/products/add" element={<AddProductPage />} />
           <Route path="/dashboard/products/edit/:id" element={<EditProductPage />} />
+          <Route path="/rfq/create" element={<CreateRFQPage />} />
+          <Route path="/dashboard/rfqs" element={<HospitalRFQsPage />} />
+          <Route path="/dashboard/rfqs/:id" element={<RFQDetailPage />} />
+          <Route path="/dashboard/supplier-rfqs" element={<SupplierRFQsPage />} />
+          <Route path="/dashboard/supplier-rfqs/:id/quote" element={<SubmitQuotePage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

@@ -226,6 +226,47 @@ function DashboardContent() {
         </Card>
       )}
 
+      {/* Quick Actions */}
+      {currentUser.verificationStatus === "approved" && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Quick Actions</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid md:grid-cols-2 gap-4">
+              {(currentUser.accountType === "hospital" || currentUser.accountType === "hospital_staff") && (
+                <>
+                  <Link to="/rfq/create">
+                    <Button className="w-full" variant="outline">
+                      Create New RFQ
+                    </Button>
+                  </Link>
+                  <Link to="/dashboard/rfqs">
+                    <Button className="w-full" variant="outline">
+                      View My RFQs
+                    </Button>
+                  </Link>
+                </>
+              )}
+              {currentUser.accountType === "supplier" && (
+                <>
+                  <Link to="/dashboard/supplier-rfqs">
+                    <Button className="w-full" variant="outline">
+                      Browse Available RFQs
+                    </Button>
+                  </Link>
+                  <Link to="/dashboard/products">
+                    <Button className="w-full" variant="outline">
+                      Manage Products
+                    </Button>
+                  </Link>
+                </>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {currentUser.verificationStatus === "pending" && (
         <Card className="bg-muted/50">
           <CardContent className="pt-6">
