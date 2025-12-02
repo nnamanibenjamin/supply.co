@@ -15,6 +15,8 @@ import HospitalRFQsPage from "./pages/dashboard/rfqs/page.tsx";
 import RFQDetailPage from "./pages/dashboard/rfqs/[id]/page.tsx";
 import SupplierRFQsPage from "./pages/dashboard/supplier-rfqs/page.tsx";
 import SubmitQuotePage from "./pages/dashboard/supplier-rfqs/[id]/quote/page.tsx";
+import CreditsPage from "./pages/dashboard/credits/page.tsx";
+import TransactionHistoryPage from "./pages/dashboard/credits/history/page.tsx";
 
 export default function App() {
   return (
@@ -35,6 +37,8 @@ export default function App() {
           <Route path="/dashboard/rfqs/:id" element={<RFQDetailPage />} />
           <Route path="/dashboard/supplier-rfqs" element={<SupplierRFQsPage />} />
           <Route path="/dashboard/supplier-rfqs/:id/quote" element={<SubmitQuotePage />} />
+          <Route path="/dashboard/credits" element={<CreditsPage />} />
+          <Route path="/dashboard/credits/history" element={<TransactionHistoryPage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

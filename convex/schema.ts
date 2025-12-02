@@ -140,4 +140,32 @@ export default defineSchema({
     .index("by_rfq", ["rfqId", "status"])
     .index("by_supplier", ["supplierId", "status"])
     .index("by_rfq_and_supplier", ["rfqId", "supplierId"]),
+
+  creditPackages: defineTable({
+    name: v.string(),
+    credits: v.number(),
+    priceKES: v.number(),
+    isActive: v.boolean(),
+    description: v.optional(v.string()),
+    displayOrder: v.number(),
+  }).index("by_active", ["isActive"]),
+
+  creditTransactions: defineTable({
+    supplierId: v.id("suppliers"),
+    type: v.union(
+      v.literal("purchase"),
+      v.literal("deduction"),
+      v.literal("refund"),
+      v.literal("admin_adjustment")
+    ),
+    amount: v.number(),
+    balanceAfter: v.number(),
+    description: v.string(),
+    rfqId: v.optional(v.id("rfqs")),
+    quotationId: v.optional(v.id("quotations")),
+    packageId: v.optional(v.id("creditPackages")),
+    processedBy: v.optional(v.id("users")),
+  })
+    .index("by_supplier", ["supplierId"])
+    .index("by_type", ["type"]),
 });

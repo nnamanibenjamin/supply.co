@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Skeleton } from "@/components/ui/skeleton.tsx";
 import { SignInButton } from "@/components/ui/signin.tsx";
 import { Button } from "@/components/ui/button.tsx";
-import { AlertCircleIcon, CheckCircle2Icon, ClockIcon, XCircleIcon } from "lucide-react";
+import { AlertCircleIcon, CheckCircle2Icon, ClockIcon, XCircleIcon, CoinsIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export default function DashboardPage() {
@@ -199,31 +199,63 @@ function DashboardContent() {
 
       {/* Supplier Details */}
       {currentUser.supplier && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Supplier Details</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid md:grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Company Name</p>
-                <p className="text-lg font-semibold">{currentUser.supplier.companyName}</p>
+        <>
+          <Card className="bg-gradient-to-br from-primary/10 to-primary/5">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CoinsIcon className="h-5 w-5" />
+                Credit Balance
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-baseline gap-2 mb-4">
+                <span className="text-4xl font-bold">{currentUser.supplier.credits}</span>
+                <span className="text-xl text-muted-foreground">credits</span>
               </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Credits</p>
-                <p className="text-lg font-semibold">{currentUser.supplier.credits}</p>
+              <div className="flex flex-wrap gap-2">
+                <Link to="/dashboard/credits">
+                  <Button size="sm">Purchase Credits</Button>
+                </Link>
+                <Link to="/dashboard/credits/history">
+                  <Button variant="outline" size="sm">View History</Button>
+                </Link>
               </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Contact Person</p>
-                <p className="text-lg font-semibold">{currentUser.supplier.contactPerson}</p>
+              {currentUser.supplier.credits < 5 && (
+                <div className="mt-4 p-3 bg-yellow-100 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                  <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                    Your credit balance is low. Purchase more credits to continue submitting quotations.
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Supplier Details</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Company Name</p>
+                  <p className="text-lg font-semibold">{currentUser.supplier.companyName}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Contact Person</p>
+                  <p className="text-lg font-semibold">{currentUser.supplier.contactPerson}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Company Email</p>
+                  <p className="text-lg font-semibold">{currentUser.supplier.email}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Phone</p>
+                  <p className="text-lg font-semibold">{currentUser.supplier.phone}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Company Email</p>
-                <p className="text-lg font-semibold">{currentUser.supplier.email}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </>
       )}
 
       {/* Quick Actions */}

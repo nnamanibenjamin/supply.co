@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { ConvexError } from "convex/values";
+import { internal } from "./_generated/api.js";
 
 // Submit quotation (supplier only)
 export const submitQuotation = mutation({
@@ -96,9 +97,15 @@ export const submitQuotation = mutation({
       createdBy: user._id,
     });
 
-    // Deduct 1 credit from supplier
-    await ctx.db.patch(user.supplierId, {
-      credits: supplier.credits - 1,
+    // Deduct 1 credit and record transaction
+    await ctx.scheduler.runAfter(0, internal.credits.recordTransaction, {
+      supplierId: user.supplierId,
+      type: "deduction",
+      amount: -1,
+      description: `Submitted quotation for RFQ: ${rfq.productName}`,
+      rfqId: args.rfqId,
+      quotationId,
+      processedBy: user._id,
     });
 
     return quotationId;
