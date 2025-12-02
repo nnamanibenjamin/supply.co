@@ -2,14 +2,15 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { ConvexError } from "convex/values";
 
-// Generate a unique hospital code
-function generateHospitalCode(): string {
-  const prefix = "H";
-  const randomNum = Math.floor(100000 + Math.random() * 900000);
-  return `${prefix}${randomNum}`;
-}
+// Generate upload URL for documents
+export const generateUploadUrl = mutation({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.storage.generateUploadUrl();
+  },
+});
 
-// Get current user profile
+// Get current user with hospital and supplier details
 export const getCurrentUser = query({
   args: {},
   handler: async (ctx) => {
@@ -20,23 +21,21 @@ export const getCurrentUser = query({
 
     const user = await ctx.db
       .query("users")
-      .withIndex("by_token", (q) =>
-        q.eq("tokenIdentifier", identity.tokenIdentifier)
-      )
-      .unique();
+      .withIndex("by_token", (q) => q.eq("tokenIdentifier", identity.tokenIdentifier))
+      .first();
 
     if (!user) {
       return null;
     }
 
-    // Get hospital or supplier details if applicable
+    // Fetch hospital details if applicable
     let hospital = null;
-    let supplier = null;
-
     if (user.hospitalId) {
       hospital = await ctx.db.get(user.hospitalId);
     }
 
+    // Fetch supplier details if applicable
+    let supplier = null;
     if (user.supplierId) {
       supplier = await ctx.db.get(user.supplierId);
     }
@@ -49,35 +48,7 @@ export const getCurrentUser = query({
   },
 });
 
-// Check if user profile exists
-export const checkUserProfile = query({
-  args: {},
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      return { exists: false };
-    }
-
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_token", (q) =>
-        q.eq("tokenIdentifier", identity.tokenIdentifier)
-      )
-      .unique();
-
-    return { exists: !!user, user: user || null };
-  },
-});
-
-// Generate upload URL for documents
-export const generateUploadUrl = mutation({
-  args: {},
-  handler: async (ctx) => {
-    return await ctx.storage.generateUploadUrl();
-  },
-});
-
-// Register hospital
+// Register hospital account (called after Hercules Auth signin)
 export const registerHospital = mutation({
   args: {
     hospitalName: v.string(),
@@ -98,49 +69,43 @@ export const registerHospital = mutation({
     // Check if user already has a profile
     const existingUser = await ctx.db
       .query("users")
-      .withIndex("by_token", (q) =>
-        q.eq("tokenIdentifier", identity.tokenIdentifier)
-      )
-      .unique();
+      .withIndex("by_token", (q) => q.eq("tokenIdentifier", identity.tokenIdentifier))
+      .first();
 
     if (existingUser) {
       throw new ConvexError({
-        message: "User profile already exists",
+        message: "You have already completed registration",
         code: "CONFLICT",
       });
     }
 
-    // Check if email is already used
-    const existingEmail = await ctx.db
+    // Check if email already exists
+    const existingHospital = await ctx.db
       .query("hospitals")
       .withIndex("by_email", (q) => q.eq("email", args.email))
       .first();
 
-    if (existingEmail) {
+    if (existingHospital) {
       throw new ConvexError({
-        message: "Email already registered",
+        message: "A hospital with this email already exists",
         code: "CONFLICT",
       });
     }
 
     // Generate unique hospital code
-    let hospitalCode = generateHospitalCode();
-    let codeExists = await ctx.db
-      .query("hospitals")
-      .withIndex("by_hospital_code", (q) => q.eq("hospitalCode", hospitalCode))
-      .first();
-
+    let hospitalCode = "";
+    let codeExists = true;
     while (codeExists) {
-      hospitalCode = generateHospitalCode();
-      codeExists = await ctx.db
+      const randomNum = Math.floor(10000 + Math.random() * 90000);
+      hospitalCode = `HOSP-${randomNum}`;
+      const existingCode = await ctx.db
         .query("hospitals")
-        .withIndex("by_hospital_code", (q) =>
-          q.eq("hospitalCode", hospitalCode)
-        )
+        .withIndex("by_hospital_code", (q) => q.eq("hospitalCode", hospitalCode))
         .first();
+      codeExists = !!existingCode;
     }
 
-    // Create user first
+    // Create user account
     const userId = await ctx.db.insert("users", {
       tokenIdentifier: identity.tokenIdentifier,
       name: args.contactPerson,
@@ -163,16 +128,14 @@ export const registerHospital = mutation({
       createdBy: userId,
     });
 
-    // Update user with hospitalId
-    await ctx.db.patch(userId, {
-      hospitalId,
-    });
+    // Link user to hospital
+    await ctx.db.patch(userId, { hospitalId });
 
-    return { success: true, hospitalCode };
+    return { hospitalCode, userId, hospitalId };
   },
 });
 
-// Register supplier
+// Register supplier account (called after Hercules Auth signin)
 export const registerSupplier = mutation({
   args: {
     companyName: v.string(),
@@ -194,32 +157,30 @@ export const registerSupplier = mutation({
     // Check if user already has a profile
     const existingUser = await ctx.db
       .query("users")
-      .withIndex("by_token", (q) =>
-        q.eq("tokenIdentifier", identity.tokenIdentifier)
-      )
-      .unique();
+      .withIndex("by_token", (q) => q.eq("tokenIdentifier", identity.tokenIdentifier))
+      .first();
 
     if (existingUser) {
       throw new ConvexError({
-        message: "User profile already exists",
+        message: "You have already completed registration",
         code: "CONFLICT",
       });
     }
 
-    // Check if email is already used
-    const existingEmail = await ctx.db
+    // Check if email already exists
+    const existingSupplier = await ctx.db
       .query("suppliers")
       .withIndex("by_email", (q) => q.eq("email", args.email))
       .first();
 
-    if (existingEmail) {
+    if (existingSupplier) {
       throw new ConvexError({
-        message: "Email already registered",
+        message: "A supplier with this email already exists",
         code: "CONFLICT",
       });
     }
 
-    // Create user first
+    // Create user account
     const userId = await ctx.db.insert("users", {
       tokenIdentifier: identity.tokenIdentifier,
       name: args.contactPerson,
@@ -244,16 +205,14 @@ export const registerSupplier = mutation({
       createdBy: userId,
     });
 
-    // Update user with supplierId
-    await ctx.db.patch(userId, {
-      supplierId,
-    });
+    // Link user to supplier
+    await ctx.db.patch(userId, { supplierId });
 
-    return { success: true };
+    return { userId, supplierId };
   },
 });
 
-// Register hospital staff (join hospital)
+// Register hospital staff account (called after Hercules Auth signin)
 export const registerHospitalStaff = mutation({
   args: {
     hospitalCode: v.string(),
@@ -273,42 +232,37 @@ export const registerHospitalStaff = mutation({
     // Check if user already has a profile
     const existingUser = await ctx.db
       .query("users")
-      .withIndex("by_token", (q) =>
-        q.eq("tokenIdentifier", identity.tokenIdentifier)
-      )
-      .unique();
+      .withIndex("by_token", (q) => q.eq("tokenIdentifier", identity.tokenIdentifier))
+      .first();
 
     if (existingUser) {
       throw new ConvexError({
-        message: "User profile already exists",
+        message: "You have already completed registration",
         code: "CONFLICT",
       });
     }
 
-    // Check if hospital code exists
+    // Find hospital by code
     const hospital = await ctx.db
       .query("hospitals")
-      .withIndex("by_hospital_code", (q) =>
-        q.eq("hospitalCode", args.hospitalCode)
-      )
-      .unique();
+      .withIndex("by_hospital_code", (q) => q.eq("hospitalCode", args.hospitalCode))
+      .first();
 
     if (!hospital) {
       throw new ConvexError({
-        message: "Invalid hospital code",
+        message: "Invalid hospital code. Please check and try again.",
         code: "NOT_FOUND",
       });
     }
 
-    // Check if hospital is verified
     if (hospital.verificationStatus !== "approved") {
       throw new ConvexError({
-        message: "Hospital is not yet verified. Please wait for approval.",
+        message: "This hospital is not yet verified. Please contact the hospital administrator.",
         code: "FORBIDDEN",
       });
     }
 
-    // Create user
+    // Create user account
     const userId = await ctx.db.insert("users", {
       tokenIdentifier: identity.tokenIdentifier,
       name: args.name,
@@ -320,6 +274,8 @@ export const registerHospitalStaff = mutation({
       hospitalId: hospital._id,
     });
 
-    return { success: true };
+    return { userId, hospitalId: hospital._id };
   },
 });
+
+

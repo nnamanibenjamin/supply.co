@@ -18,7 +18,6 @@ export default function Index() {
           <nav className="hidden md:flex items-center gap-6">
             <a href="#how-it-works" className="text-sm font-medium hover:text-primary transition-colors">How It Works</a>
             <a href="#features" className="text-sm font-medium hover:text-primary transition-colors">Features</a>
-            <Link to="/login"><Button variant="ghost">Sign In</Button></Link>
             <Link to="/signup"><Button>Get Started</Button></Link>
           </nav>
         </div>
