@@ -1,19 +1,13 @@
 import { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthCallback } from "@usehercules/auth/react";
-import { useConvexAuth, useMutation } from "convex/react";
-import { api } from "@/convex/_generated/api.js";
+import { useConvexAuth } from "convex/react";
 import { Spinner } from "@/components/ui/spinner.tsx";
 import { Button } from "@/components/ui/button.tsx";
 
 export default function AuthCallback() {
   const navigate = useNavigate();
   const { isAuthenticated: isConvexAuthenticated } = useConvexAuth();
-  const updateCurrentUser = useMutation(api.users.updateCurrentUser);
-
-  const onSync = useCallback(async () => {
-    await updateCurrentUser();
-  }, [updateCurrentUser]);
 
   const navigateHome = useCallback(
     () => navigate("/", { replace: true }),
@@ -22,7 +16,6 @@ export default function AuthCallback() {
 
   const { status, error, retry } = useAuthCallback({
     isBackendAuthenticated: isConvexAuthenticated,
-    onSync,
     onSuccess: navigateHome,
     onNoAuthParams: navigateHome,
   });
