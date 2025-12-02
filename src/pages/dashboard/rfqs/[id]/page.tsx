@@ -71,6 +71,7 @@ function RFQDetailContent() {
   const rfq = useQuery(api.rfqs.getRFQ, id ? { rfqId: id as Id<"rfqs"> } : "skip");
   const quotations = useQuery(api.quotations.getRFQQuotations, id ? { rfqId: id as Id<"rfqs"> } : "skip");
   const acceptQuotation = useMutation(api.quotations.acceptQuotation);
+  const rejectQuotation = useMutation(api.quotations.rejectQuotation);
   const updateRFQStatus = useMutation(api.rfqs.updateRFQStatus);
 
   const handleAcceptQuotation = async (quotationId: Id<"quotations">) => {
@@ -82,6 +83,19 @@ function RFQDetailContent() {
         toast.error(error.message);
       } else {
         toast.error("Failed to accept quotation");
+      }
+    }
+  };
+
+  const handleRejectQuotation = async (quotationId: Id<"quotations">) => {
+    try {
+      await rejectQuotation({ quotationId });
+      toast.success("Quotation rejected");
+    } catch (error) {
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error("Failed to reject quotation");
       }
     }
   };
@@ -285,13 +299,23 @@ function RFQDetailContent() {
                     <TableCell>{getQuotationStatusBadge(quotation.status)}</TableCell>
                     <TableCell className="text-right">
                       {rfq.status === "open" && quotation.status === "pending" && (
-                        <Button
-                          size="sm"
-                          onClick={() => handleAcceptQuotation(quotation._id)}
-                        >
-                          <CheckCircle2Icon className="h-4 w-4 mr-1" />
-                          Accept
-                        </Button>
+                        <div className="flex gap-2 justify-end">
+                          <Button
+                            size="sm"
+                            onClick={() => handleAcceptQuotation(quotation._id)}
+                          >
+                            <CheckCircle2Icon className="h-4 w-4 mr-1" />
+                            Accept
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleRejectQuotation(quotation._id)}
+                          >
+                            <XCircleIcon className="h-4 w-4 mr-1" />
+                            Reject
+                          </Button>
+                        </div>
                       )}
                     </TableCell>
                   </TableRow>

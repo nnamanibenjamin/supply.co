@@ -250,8 +250,12 @@ export const acceptQuotation = mutation({
 
 // Get supplier's quotations
 export const getSupplierQuotations = query({
-  args: {},
-  handler: async (ctx) => {
+  args: {
+    status: v.optional(
+      v.union(v.literal("pending"), v.literal("accepted"), v.literal("rejected"))
+    ),
+  },
+  handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
       throw new ConvexError({
@@ -274,7 +278,11 @@ export const getSupplierQuotations = query({
 
     const quotations = await ctx.db
       .query("quotations")
-      .withIndex("by_supplier", (q) => q.eq("supplierId", user.supplierId!))
+      .withIndex("by_supplier", (q) =>
+        args.status
+          ? q.eq("supplierId", user.supplierId!).eq("status", args.status)
+          : q.eq("supplierId", user.supplierId!)
+      )
       .order("desc")
       .collect();
 
@@ -297,5 +305,285 @@ export const getSupplierQuotations = query({
     );
 
     return quotationsWithDetails;
+  },
+});
+
+// Get single quotation details
+export const getQuotation = query({
+  args: { quotationId: v.id("quotations") },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError({
+        message: "User not logged in",
+        code: "UNAUTHENTICATED",
+      });
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_token", (q) => q.eq("tokenIdentifier", identity.tokenIdentifier))
+      .first();
+
+    if (!user) {
+      throw new ConvexError({
+        message: "User not found",
+        code: "NOT_FOUND",
+      });
+    }
+
+    const quotation = await ctx.db.get(args.quotationId);
+    if (!quotation) {
+      throw new ConvexError({
+        message: "Quotation not found",
+        code: "NOT_FOUND",
+      });
+    }
+
+    // Check access permissions
+    if (user.accountType === "supplier") {
+      if (quotation.supplierId !== user.supplierId) {
+        throw new ConvexError({
+          message: "You can only view your own quotations",
+          code: "FORBIDDEN",
+        });
+      }
+    } else if (user.accountType === "hospital" || user.accountType === "hospital_staff") {
+      const rfq = await ctx.db.get(quotation.rfqId);
+      if (!rfq || rfq.hospitalId !== user.hospitalId) {
+        throw new ConvexError({
+          message: "You can only view quotations for your hospital's RFQs",
+          code: "FORBIDDEN",
+        });
+      }
+    } else {
+      throw new ConvexError({
+        message: "Access denied",
+        code: "FORBIDDEN",
+      });
+    }
+
+    // Get related data
+    const rfq = await ctx.db.get(quotation.rfqId);
+    const supplier = await ctx.db.get(quotation.supplierId);
+    const hospital = rfq ? await ctx.db.get(rfq.hospitalId) : null;
+    const product = quotation.productId
+      ? await ctx.db.get(quotation.productId)
+      : null;
+
+    return {
+      ...quotation,
+      rfq,
+      supplier,
+      hospital,
+      product,
+    };
+  },
+});
+
+// Update quotation (supplier only, before acceptance)
+export const updateQuotation = mutation({
+  args: {
+    quotationId: v.id("quotations"),
+    unitPrice: v.number(),
+    deliveryTime: v.string(),
+    notes: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError({
+        message: "User not logged in",
+        code: "UNAUTHENTICATED",
+      });
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_token", (q) => q.eq("tokenIdentifier", identity.tokenIdentifier))
+      .first();
+
+    if (!user || !user.supplierId) {
+      throw new ConvexError({
+        message: "Only suppliers can update quotations",
+        code: "FORBIDDEN",
+      });
+    }
+
+    const quotation = await ctx.db.get(args.quotationId);
+    if (!quotation) {
+      throw new ConvexError({
+        message: "Quotation not found",
+        code: "NOT_FOUND",
+      });
+    }
+
+    // Verify ownership
+    if (quotation.supplierId !== user.supplierId) {
+      throw new ConvexError({
+        message: "You can only update your own quotations",
+        code: "FORBIDDEN",
+      });
+    }
+
+    // Can only update pending quotations
+    if (quotation.status !== "pending") {
+      throw new ConvexError({
+        message: "Cannot update a quotation that has been accepted or rejected",
+        code: "FORBIDDEN",
+      });
+    }
+
+    // Verify RFQ is still open
+    const rfq = await ctx.db.get(quotation.rfqId);
+    if (!rfq || rfq.status !== "open") {
+      throw new ConvexError({
+        message: "Cannot update quotation for a closed RFQ",
+        code: "FORBIDDEN",
+      });
+    }
+
+    // Calculate new total price
+    const totalPrice = args.unitPrice * rfq.quantity;
+
+    // Update quotation
+    await ctx.db.patch(args.quotationId, {
+      unitPrice: args.unitPrice,
+      totalPrice,
+      deliveryTime: args.deliveryTime,
+      notes: args.notes,
+    });
+
+    return { success: true };
+  },
+});
+
+// Withdraw quotation (supplier only, before acceptance)
+export const withdrawQuotation = mutation({
+  args: { quotationId: v.id("quotations") },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError({
+        message: "User not logged in",
+        code: "UNAUTHENTICATED",
+      });
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_token", (q) => q.eq("tokenIdentifier", identity.tokenIdentifier))
+      .first();
+
+    if (!user || !user.supplierId) {
+      throw new ConvexError({
+        message: "Only suppliers can withdraw quotations",
+        code: "FORBIDDEN",
+      });
+    }
+
+    const quotation = await ctx.db.get(args.quotationId);
+    if (!quotation) {
+      throw new ConvexError({
+        message: "Quotation not found",
+        code: "NOT_FOUND",
+      });
+    }
+
+    // Verify ownership
+    if (quotation.supplierId !== user.supplierId) {
+      throw new ConvexError({
+        message: "You can only withdraw your own quotations",
+        code: "FORBIDDEN",
+      });
+    }
+
+    // Can only withdraw pending quotations
+    if (quotation.status !== "pending") {
+      throw new ConvexError({
+        message: "Cannot withdraw a quotation that has been accepted or rejected",
+        code: "FORBIDDEN",
+      });
+    }
+
+    // Delete the quotation
+    await ctx.db.delete(args.quotationId);
+
+    // Refund the credit
+    const rfq = await ctx.db.get(quotation.rfqId);
+    await ctx.scheduler.runAfter(0, internal.credits.recordTransaction, {
+      supplierId: user.supplierId,
+      type: "refund",
+      amount: 1,
+      description: `Refund for withdrawn quotation: ${rfq?.productName || "RFQ"}`,
+      rfqId: quotation.rfqId,
+      quotationId: args.quotationId,
+      processedBy: user._id,
+    });
+
+    return { success: true };
+  },
+});
+
+// Reject quotation (hospital only)
+export const rejectQuotation = mutation({
+  args: { quotationId: v.id("quotations") },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError({
+        message: "User not logged in",
+        code: "UNAUTHENTICATED",
+      });
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_token", (q) => q.eq("tokenIdentifier", identity.tokenIdentifier))
+      .first();
+
+    if (!user || !user.hospitalId) {
+      throw new ConvexError({
+        message: "Only hospital users can reject quotations",
+        code: "FORBIDDEN",
+      });
+    }
+
+    const quotation = await ctx.db.get(args.quotationId);
+    if (!quotation) {
+      throw new ConvexError({
+        message: "Quotation not found",
+        code: "NOT_FOUND",
+      });
+    }
+
+    const rfq = await ctx.db.get(quotation.rfqId);
+    if (!rfq) {
+      throw new ConvexError({
+        message: "RFQ not found",
+        code: "NOT_FOUND",
+      });
+    }
+
+    // Check if user's hospital owns this RFQ
+    if (rfq.hospitalId !== user.hospitalId) {
+      throw new ConvexError({
+        message: "You can only reject quotations for your hospital's RFQs",
+        code: "FORBIDDEN",
+      });
+    }
+
+    // Can only reject pending quotations
+    if (quotation.status !== "pending") {
+      throw new ConvexError({
+        message: "Quotation has already been accepted or rejected",
+        code: "FORBIDDEN",
+      });
+    }
+
+    // Update quotation status
+    await ctx.db.patch(args.quotationId, { status: "rejected" });
+
+    return { success: true };
   },
 });

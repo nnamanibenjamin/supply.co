@@ -287,6 +287,11 @@ function DashboardContent() {
                       Browse Available RFQs
                     </Button>
                   </Link>
+                  <Link to="/dashboard/quotations">
+                    <Button className="w-full" variant="outline">
+                      Manage Quotations
+                    </Button>
+                  </Link>
                   <Link to="/dashboard/products">
                     <Button className="w-full" variant="outline">
                       Manage Products

@@ -125,7 +125,14 @@ function RFQsContent() {
                 Each quotation costs 1 credit
               </p>
             </div>
-            <Button variant="outline">Buy More Credits</Button>
+            <div className="flex gap-2">
+              <Link to="/dashboard/credits">
+                <Button variant="outline">Buy More Credits</Button>
+              </Link>
+              <Link to="/dashboard/quotations">
+                <Button variant="outline">View My Quotations</Button>
+              </Link>
+            </div>
           </div>
         </CardContent>
       </Card>
