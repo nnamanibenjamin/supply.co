@@ -70,7 +70,9 @@ export default function AdminCreditPackagesPage() {
 }
 
 function CreditPackagesContent() {
-  const packages = useQuery(api.admin.listAllCreditPackages);
+  const currentUser = useQuery(api.auth.getCurrentUser);
+  const isAdmin = currentUser?.accountType === "admin";
+  const packages = useQuery(api.admin.listAllCreditPackages, isAdmin ? {} : "skip");
   const createPackage = useMutation(api.admin.createCreditPackage);
   const updatePackage = useMutation(api.admin.updateCreditPackage);
   const deletePackage = useMutation(api.admin.deleteCreditPackage);
@@ -175,8 +177,24 @@ function CreditPackagesContent() {
     }
   };
 
-  if (packages === undefined) {
+  if (currentUser === undefined || packages === undefined) {
     return <Skeleton className="h-96 w-full" />;
+  }
+
+  if (!currentUser || currentUser.accountType !== "admin") {
+    return (
+      <Card className="max-w-2xl mx-auto">
+        <CardHeader className="text-center">
+          <CardTitle>Access Denied</CardTitle>
+          <CardDescription>You do not have admin privileges to access this page</CardDescription>
+        </CardHeader>
+        <CardContent className="flex justify-center">
+          <Link to="/admin">
+            <Button>Back to Admin</Button>
+          </Link>
+        </CardContent>
+      </Card>
+    );
   }
 
   return (

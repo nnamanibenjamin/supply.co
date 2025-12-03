@@ -66,9 +66,12 @@ export default function AdminPage() {
 
 function AdminContent() {
   const currentUser = useQuery(api.auth.getCurrentUser);
-  const stats = useQuery(api.admin.getStats);
+  
+  // Only fetch stats if user is confirmed to be admin
+  const isAdmin = currentUser?.accountType === "admin";
+  const stats = useQuery(api.admin.getStats, isAdmin ? {} : "skip");
 
-  if (currentUser === undefined || stats === undefined) {
+  if (currentUser === undefined) {
     return (
       <div className="max-w-6xl mx-auto space-y-4">
         <Skeleton className="h-32 w-full" />
@@ -86,15 +89,36 @@ function AdminContent() {
             Access Denied
           </CardTitle>
           <CardDescription>
-            You do not have admin privileges to access this page
+            You do not have admin privileges to access this page. Please contact support if you need admin access.
           </CardDescription>
         </CardHeader>
-        <CardContent className="flex justify-center">
-          <Link to="/dashboard">
-            <Button>Go to Dashboard</Button>
-          </Link>
+        <CardContent className="space-y-4">
+          <div className="bg-muted/50 p-4 rounded-lg text-sm">
+            <p className="font-medium mb-2">To access the admin panel:</p>
+            <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
+              <li>Go to the Database tab in the App Builder</li>
+              <li>Find the "users" table</li>
+              <li>Locate your user record</li>
+              <li>Change "accountType" from "{currentUser?.accountType || 'current'}" to "admin"</li>
+              <li>Refresh this page</li>
+            </ol>
+          </div>
+          <div className="flex justify-center">
+            <Link to="/dashboard">
+              <Button>Go to Dashboard</Button>
+            </Link>
+          </div>
         </CardContent>
       </Card>
+    );
+  }
+
+  if (stats === undefined) {
+    return (
+      <div className="max-w-6xl mx-auto space-y-4">
+        <Skeleton className="h-32 w-full" />
+        <Skeleton className="h-32 w-full" />
+      </div>
     );
   }
 

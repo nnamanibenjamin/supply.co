@@ -69,8 +69,10 @@ export default function AdminHospitalsPage() {
 }
 
 function HospitalsContent() {
+  const currentUser = useQuery(api.auth.getCurrentUser);
   const [selectedStatus, setSelectedStatus] = useState<"pending" | "approved" | "rejected">("pending");
-  const hospitals = useQuery(api.admin.listHospitals, { status: selectedStatus });
+  const isAdmin = currentUser?.accountType === "admin";
+  const hospitals = useQuery(api.admin.listHospitals, isAdmin ? { status: selectedStatus } : "skip");
   const approveHospital = useMutation(api.admin.approveHospital);
   const rejectHospital = useMutation(api.admin.rejectHospital);
 
@@ -111,8 +113,24 @@ function HospitalsContent() {
     }
   };
 
-  if (hospitals === undefined) {
+  if (currentUser === undefined || hospitals === undefined) {
     return <Skeleton className="h-96 w-full" />;
+  }
+
+  if (!currentUser || currentUser.accountType !== "admin") {
+    return (
+      <Card className="max-w-2xl mx-auto">
+        <CardHeader className="text-center">
+          <CardTitle>Access Denied</CardTitle>
+          <CardDescription>You do not have admin privileges to access this page</CardDescription>
+        </CardHeader>
+        <CardContent className="flex justify-center">
+          <Link to="/admin">
+            <Button>Back to Admin</Button>
+          </Link>
+        </CardContent>
+      </Card>
+    );
   }
 
   return (

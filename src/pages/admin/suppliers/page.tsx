@@ -69,8 +69,10 @@ export default function AdminSuppliersPage() {
 }
 
 function SuppliersContent() {
+  const currentUser = useQuery(api.auth.getCurrentUser);
   const [selectedStatus, setSelectedStatus] = useState<"pending" | "approved" | "rejected">("pending");
-  const suppliers = useQuery(api.admin.listSuppliers, { status: selectedStatus });
+  const isAdmin = currentUser?.accountType === "admin";
+  const suppliers = useQuery(api.admin.listSuppliers, isAdmin ? { status: selectedStatus } : "skip");
   const approveSupplier = useMutation(api.admin.approveSupplier);
   const rejectSupplier = useMutation(api.admin.rejectSupplier);
 
@@ -111,8 +113,24 @@ function SuppliersContent() {
     }
   };
 
-  if (suppliers === undefined) {
+  if (currentUser === undefined || suppliers === undefined) {
     return <Skeleton className="h-96 w-full" />;
+  }
+
+  if (!currentUser || currentUser.accountType !== "admin") {
+    return (
+      <Card className="max-w-2xl mx-auto">
+        <CardHeader className="text-center">
+          <CardTitle>Access Denied</CardTitle>
+          <CardDescription>You do not have admin privileges to access this page</CardDescription>
+        </CardHeader>
+        <CardContent className="flex justify-center">
+          <Link to="/admin">
+            <Button>Back to Admin</Button>
+          </Link>
+        </CardContent>
+      </Card>
+    );
   }
 
   return (
