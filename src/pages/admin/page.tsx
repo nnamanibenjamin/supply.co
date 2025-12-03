@@ -224,6 +224,12 @@ function AdminContent() {
                 Monitor RFQs
               </Button>
             </Link>
+            <Link to="/admin/reports">
+              <Button className="w-full" variant="outline">
+                <FileTextIcon className="mr-2 h-4 w-4" />
+                Platform Reports
+              </Button>
+            </Link>
           </div>
         </CardContent>
       </Card>

@@ -26,6 +26,8 @@ import AdminSuppliersPage from "./pages/admin/suppliers/page.tsx";
 import AdminCreditPackagesPage from "./pages/admin/credit-packages/page.tsx";
 import AdminUsersPage from "./pages/admin/users/page.tsx";
 import AdminRfqsPage from "./pages/admin/rfqs/page.tsx";
+import AdminReportsPage from "./pages/admin/reports/page.tsx";
+import DashboardReportsPage from "./pages/dashboard/reports/page.tsx";
 
 export default function App() {
   return (
@@ -51,12 +53,14 @@ export default function App() {
           <Route path="/dashboard/quotations" element={<QuotationsPage />} />
           <Route path="/dashboard/quotations/:id" element={<QuotationDetailPage />} />
           <Route path="/dashboard/notifications" element={<NotificationsPage />} />
+          <Route path="/dashboard/reports" element={<DashboardReportsPage />} />
           <Route path="/admin" element={<AdminPage />} />
           <Route path="/admin/hospitals" element={<AdminHospitalsPage />} />
           <Route path="/admin/suppliers" element={<AdminSuppliersPage />} />
           <Route path="/admin/credit-packages" element={<AdminCreditPackagesPage />} />
           <Route path="/admin/users" element={<AdminUsersPage />} />
           <Route path="/admin/rfqs" element={<AdminRfqsPage />} />
+          <Route path="/admin/reports" element={<AdminReportsPage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

@@ -282,6 +282,11 @@ function DashboardContent() {
                       View My RFQs
                     </Button>
                   </Link>
+                  <Link to="/dashboard/reports">
+                    <Button className="w-full" variant="outline">
+                      View Reports
+                    </Button>
+                  </Link>
                 </>
               )}
               {currentUser.accountType === "supplier" && (
@@ -299,6 +304,11 @@ function DashboardContent() {
                   <Link to="/dashboard/products">
                     <Button className="w-full" variant="outline">
                       Manage Products
+                    </Button>
+                  </Link>
+                  <Link to="/dashboard/reports">
+                    <Button className="w-full" variant="outline">
+                      View Reports
                     </Button>
                   </Link>
                 </>

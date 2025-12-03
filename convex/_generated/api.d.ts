@@ -15,6 +15,7 @@ import type * as credits from "../credits.js";
 import type * as notifications from "../notifications.js";
 import type * as products from "../products.js";
 import type * as quotations from "../quotations.js";
+import type * as reports from "../reports.js";
 import type * as rfqs from "../rfqs.js";
 import type * as users from "../users.js";
 
@@ -32,6 +33,7 @@ declare const fullApi: ApiFromModules<{
   notifications: typeof notifications;
   products: typeof products;
   quotations: typeof quotations;
+  reports: typeof reports;
   rfqs: typeof rfqs;
   users: typeof users;
 }>;
