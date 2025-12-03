@@ -20,6 +20,12 @@ import TransactionHistoryPage from "./pages/dashboard/credits/history/page.tsx";
 import QuotationsPage from "./pages/dashboard/quotations/page.tsx";
 import QuotationDetailPage from "./pages/dashboard/quotations/[id]/page.tsx";
 import NotificationsPage from "./pages/dashboard/notifications/page.tsx";
+import AdminPage from "./pages/admin/page.tsx";
+import AdminHospitalsPage from "./pages/admin/hospitals/page.tsx";
+import AdminSuppliersPage from "./pages/admin/suppliers/page.tsx";
+import AdminCreditPackagesPage from "./pages/admin/credit-packages/page.tsx";
+import AdminUsersPage from "./pages/admin/users/page.tsx";
+import AdminRfqsPage from "./pages/admin/rfqs/page.tsx";
 
 export default function App() {
   return (
@@ -45,6 +51,12 @@ export default function App() {
           <Route path="/dashboard/quotations" element={<QuotationsPage />} />
           <Route path="/dashboard/quotations/:id" element={<QuotationDetailPage />} />
           <Route path="/dashboard/notifications" element={<NotificationsPage />} />
+          <Route path="/admin" element={<AdminPage />} />
+          <Route path="/admin/hospitals" element={<AdminHospitalsPage />} />
+          <Route path="/admin/suppliers" element={<AdminSuppliersPage />} />
+          <Route path="/admin/credit-packages" element={<AdminCreditPackagesPage />} />
+          <Route path="/admin/users" element={<AdminUsersPage />} />
+          <Route path="/admin/rfqs" element={<AdminRfqsPage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

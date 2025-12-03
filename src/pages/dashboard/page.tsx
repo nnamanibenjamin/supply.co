@@ -303,6 +303,13 @@ function DashboardContent() {
                   </Link>
                 </>
               )}
+              {currentUser.accountType === "admin" && (
+                <Link to="/admin">
+                  <Button className="w-full" variant="default">
+                    Admin Panel
+                  </Button>
+                </Link>
+              )}
             </div>
           </CardContent>
         </Card>
