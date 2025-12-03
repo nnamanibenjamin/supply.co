@@ -168,4 +168,34 @@ export default defineSchema({
   })
     .index("by_supplier", ["supplierId"])
     .index("by_type", ["type"]),
+
+  notifications: defineTable({
+    userId: v.id("users"),
+    type: v.union(
+      v.literal("new_rfq"),
+      v.literal("quotation_submitted"),
+      v.literal("quotation_accepted"),
+      v.literal("quotation_rejected"),
+      v.literal("rfq_closed"),
+      v.literal("account_verified"),
+      v.literal("account_rejected"),
+      v.literal("low_credits")
+    ),
+    title: v.string(),
+    message: v.string(),
+    isRead: v.boolean(),
+    rfqId: v.optional(v.id("rfqs")),
+    quotationId: v.optional(v.id("quotations")),
+    metadata: v.optional(
+      v.object({
+        hospitalName: v.optional(v.string()),
+        supplierName: v.optional(v.string()),
+        productName: v.optional(v.string()),
+        price: v.optional(v.number()),
+      })
+    ),
+  })
+    .index("by_user", ["userId", "isRead"])
+    .index("by_user_and_type", ["userId", "type"])
+    .index("by_read_status", ["isRead"]),
 });

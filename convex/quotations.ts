@@ -108,6 +108,19 @@ export const submitQuotation = mutation({
       processedBy: user._id,
     });
 
+    // Notify hospital about new quotation
+    const hospital = await ctx.db.get(rfq.hospitalId);
+    if (hospital) {
+      await ctx.scheduler.runAfter(0, internal.notifications.notifyHospitalAboutQuotation, {
+        quotationId,
+        rfqId: args.rfqId,
+        hospitalId: rfq.hospitalId,
+        supplierName: supplier.companyName,
+        productName: rfq.productName,
+        totalPrice,
+      });
+    }
+
     return quotationId;
   },
 });
@@ -232,6 +245,18 @@ export const acceptQuotation = mutation({
     // Update RFQ status to fulfilled
     await ctx.db.patch(quotation.rfqId, { status: "fulfilled" });
 
+    // Notify supplier about acceptance
+    const hospital = await ctx.db.get(rfq.hospitalId);
+    if (hospital) {
+      await ctx.scheduler.runAfter(0, internal.notifications.notifySupplierAboutQuotationStatus, {
+        quotationId: args.quotationId,
+        supplierId: quotation.supplierId,
+        status: "accepted",
+        hospitalName: hospital.name,
+        productName: rfq.productName,
+      });
+    }
+
     // Reject all other quotations for this RFQ
     const otherQuotations = await ctx.db
       .query("quotations")
@@ -241,6 +266,17 @@ export const acceptQuotation = mutation({
     for (const other of otherQuotations) {
       if (other._id !== args.quotationId && other.status === "pending") {
         await ctx.db.patch(other._id, { status: "rejected" });
+        
+        // Notify supplier about rejection
+        if (hospital) {
+          await ctx.scheduler.runAfter(0, internal.notifications.notifySupplierAboutQuotationStatus, {
+            quotationId: other._id,
+            supplierId: other.supplierId,
+            status: "rejected",
+            hospitalName: hospital.name,
+            productName: rfq.productName,
+          });
+        }
       }
     }
 
@@ -583,6 +619,18 @@ export const rejectQuotation = mutation({
 
     // Update quotation status
     await ctx.db.patch(args.quotationId, { status: "rejected" });
+
+    // Notify supplier about rejection
+    const hospital = await ctx.db.get(rfq.hospitalId);
+    if (hospital) {
+      await ctx.scheduler.runAfter(0, internal.notifications.notifySupplierAboutQuotationStatus, {
+        quotationId: args.quotationId,
+        supplierId: quotation.supplierId,
+        status: "rejected",
+        hospitalName: hospital.name,
+        productName: rfq.productName,
+      });
+    }
 
     return { success: true };
   },

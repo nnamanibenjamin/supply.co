@@ -69,6 +69,14 @@ export const createRFQ = mutation({
       rfqId,
     });
 
+    // Notify suppliers about new RFQ
+    await ctx.scheduler.runAfter(0, internal.notifications.notifySuppliersAboutRFQ, {
+      rfqId,
+      categoryId: args.categoryId,
+      productName: args.productName,
+      hospitalName: hospital.name,
+    });
+
     return rfqId;
   },
 });

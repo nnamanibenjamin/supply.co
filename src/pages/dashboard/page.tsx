@@ -7,6 +7,7 @@ import { SignInButton } from "@/components/ui/signin.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import { AlertCircleIcon, CheckCircle2Icon, ClockIcon, XCircleIcon, CoinsIcon } from "lucide-react";
 import { Link } from "react-router-dom";
+import { NotificationsBell } from "@/components/notifications-bell.tsx";
 
 export default function DashboardPage() {
   return (
@@ -20,6 +21,9 @@ export default function DashboardPage() {
             </div>
             <span className="text-xl font-bold">saline.co.ke</span>
           </Link>
+          <Authenticated>
+            <NotificationsBell />
+          </Authenticated>
         </div>
       </header>
 

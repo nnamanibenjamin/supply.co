@@ -19,6 +19,7 @@ import CreditsPage from "./pages/dashboard/credits/page.tsx";
 import TransactionHistoryPage from "./pages/dashboard/credits/history/page.tsx";
 import QuotationsPage from "./pages/dashboard/quotations/page.tsx";
 import QuotationDetailPage from "./pages/dashboard/quotations/[id]/page.tsx";
+import NotificationsPage from "./pages/dashboard/notifications/page.tsx";
 
 export default function App() {
   return (
@@ -43,6 +44,7 @@ export default function App() {
           <Route path="/dashboard/credits/history" element={<TransactionHistoryPage />} />
           <Route path="/dashboard/quotations" element={<QuotationsPage />} />
           <Route path="/dashboard/quotations/:id" element={<QuotationDetailPage />} />
+          <Route path="/dashboard/notifications" element={<NotificationsPage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
