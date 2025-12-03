@@ -21,6 +21,37 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { useState } from "react";
+import { DownloadIcon } from "lucide-react";
+
+// Helper function to export data to CSV
+function exportToCSV(data: Record<string, unknown>[], filename: string) {
+  if (data.length === 0) return;
+
+  const headers = Object.keys(data[0]);
+  const csvContent = [
+    headers.join(","),
+    ...data.map((row) =>
+      headers.map((header) => {
+        const value = row[header];
+        // Handle values that might contain commas
+        if (typeof value === "string" && value.includes(",")) {
+          return `"${value}"`;
+        }
+        return value;
+      }).join(",")
+    ),
+  ].join("\n");
+
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const link = document.createElement("a");
+  const url = URL.createObjectURL(blob);
+  link.setAttribute("href", url);
+  link.setAttribute("download", filename);
+  link.style.visibility = "hidden";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
 
 export default function AdminReportsPage() {
   return (
@@ -76,6 +107,85 @@ function ReportsContent() {
     return <Skeleton className="h-96 w-full" />;
   }
 
+  const handleExportStats = () => {
+    const data = [
+      {
+        Metric: "Total Users",
+        Value: stats.totalUsers,
+      },
+      {
+        Metric: "Recent Users (30 days)",
+        Value: stats.recentUsers,
+      },
+      {
+        Metric: "Total Hospitals",
+        Value: stats.totalHospitals,
+      },
+      {
+        Metric: "Total Suppliers",
+        Value: stats.totalSuppliers,
+      },
+      {
+        Metric: "Total RFQs",
+        Value: stats.totalRfqs,
+      },
+      {
+        Metric: "Open RFQs",
+        Value: stats.openRfqs,
+      },
+      {
+        Metric: "Closed RFQs",
+        Value: stats.closedRfqs,
+      },
+      {
+        Metric: "Fulfilled RFQs",
+        Value: stats.fulfilledRfqs,
+      },
+      {
+        Metric: "Total Quotations",
+        Value: stats.totalQuotations,
+      },
+      {
+        Metric: "Pending Quotations",
+        Value: stats.pendingQuotations,
+      },
+      {
+        Metric: "Accepted Quotations",
+        Value: stats.acceptedQuotations,
+      },
+      {
+        Metric: "Rejected Quotations",
+        Value: stats.rejectedQuotations,
+      },
+      {
+        Metric: "Total Revenue (KES)",
+        Value: stats.totalRevenue,
+      },
+    ];
+    exportToCSV(data, `platform-stats-${new Date().toISOString().split("T")[0]}.csv`);
+  };
+
+  const handleExportTimeline = () => {
+    const data = timeline.map((item) => ({
+      Date: item.date,
+      RFQs: item.rfqs,
+      Quotations: item.quotations,
+      "Revenue (KES)": item.revenue,
+    }));
+    exportToCSV(data, `activity-timeline-${timeRange}days-${new Date().toISOString().split("T")[0]}.csv`);
+  };
+
+  const handleExportCategories = () => {
+    const data = categoryPerf.map((cat) => ({
+      Category: cat.name,
+      "RFQ Count": cat.rfqCount,
+      "Quotation Count": cat.quotationCount,
+      "Accepted Count": cat.acceptedCount,
+      "Total Value (KES)": cat.totalValue,
+    }));
+    exportToCSV(data, `category-performance-${new Date().toISOString().split("T")[0]}.csv`);
+  };
+
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
@@ -83,9 +193,15 @@ function ReportsContent() {
           <h1 className="text-3xl font-bold mb-2">Platform Reports</h1>
           <p className="text-muted-foreground">Analytics and insights for saline.co.ke</p>
         </div>
-        <Link to="/admin">
-          <Button variant="outline">Back to Admin</Button>
-        </Link>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={handleExportStats}>
+            <DownloadIcon className="h-4 w-4 mr-2" />
+            Export Stats
+          </Button>
+          <Link to="/admin">
+            <Button variant="outline">Back to Admin</Button>
+          </Link>
+        </div>
       </div>
 
       {/* Key Metrics */}
@@ -150,6 +266,9 @@ function ReportsContent() {
                   <CardDescription>RFQs, Quotations, and Revenue over time</CardDescription>
                 </div>
                 <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={handleExportTimeline}>
+                    <DownloadIcon className="h-4 w-4" />
+                  </Button>
                   <Button
                     size="sm"
                     variant={timeRange === 7 ? "default" : "outline"}
@@ -175,18 +294,24 @@ function ReportsContent() {
               </div>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={350}>
-                <LineChart data={timeline}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Line type="monotone" dataKey="rfqs" stroke="#3b82f6" name="RFQs" />
-                  <Line type="monotone" dataKey="quotations" stroke="#10b981" name="Quotations" />
-                  <Line type="monotone" dataKey="revenue" stroke="#f59e0b" name="Revenue (KES)" />
-                </LineChart>
-              </ResponsiveContainer>
+              {timeline.length === 0 ? (
+                <div className="h-[350px] flex items-center justify-center text-muted-foreground">
+                  <p>No platform activity in the selected time period</p>
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height={350}>
+                  <LineChart data={timeline}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Line type="monotone" dataKey="rfqs" stroke="#3b82f6" name="RFQs" />
+                    <Line type="monotone" dataKey="quotations" stroke="#10b981" name="Quotations" />
+                    <Line type="monotone" dataKey="revenue" stroke="#f59e0b" name="Revenue (KES)" />
+                  </LineChart>
+                </ResponsiveContainer>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -194,26 +319,42 @@ function ReportsContent() {
         <TabsContent value="categories" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Category Performance</CardTitle>
-              <CardDescription>RFQs and quotations by category</CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Category Performance</CardTitle>
+                  <CardDescription>RFQs and quotations by category</CardDescription>
+                </div>
+                <Button variant="outline" size="sm" onClick={handleExportCategories}>
+                  <DownloadIcon className="h-4 w-4" />
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={400}>
-                <BarChart data={categoryPerf}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="rfqCount" fill="#3b82f6" name="RFQs" />
-                  <Bar dataKey="quotationCount" fill="#10b981" name="Quotations" />
-                  <Bar dataKey="acceptedCount" fill="#f59e0b" name="Accepted" />
-                </BarChart>
-              </ResponsiveContainer>
+              {categoryPerf.length === 0 ? (
+                <div className="h-[400px] flex items-center justify-center text-muted-foreground">
+                  <p>No category data available yet</p>
+                </div>
+              ) : (
+                <>
+                  <ResponsiveContainer width="100%" height={400}>
+                    <BarChart data={categoryPerf}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Bar dataKey="rfqCount" fill="#3b82f6" name="RFQs" />
+                      <Bar dataKey="quotationCount" fill="#10b981" name="Quotations" />
+                      <Bar dataKey="acceptedCount" fill="#f59e0b" name="Accepted" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </>
+              )}
             </CardContent>
           </Card>
 
-          <div className="grid md:grid-cols-2 gap-4">
+          {categoryPerf.length > 0 && (
+            <div className="grid md:grid-cols-2 gap-4">
             {categoryPerf.map((cat) => (
               <Card key={cat.name}>
                 <CardHeader>
@@ -239,7 +380,8 @@ function ReportsContent() {
                 </CardContent>
               </Card>
             ))}
-          </div>
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="breakdown" className="space-y-4">
