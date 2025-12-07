@@ -30,6 +30,7 @@ export default function SupplierSignupForm() {
   const [uploading, setUploading] = useState(false);
   const [cr12Id, setCr12Id] = useState<Id<"_storage"> | null>(null);
   
+  const currentUser = useQuery(api.auth.getCurrentUser);
   const categories = useQuery(api.categories.getActiveCategories);
   const generateUploadUrl = useMutation(api.auth.generateUploadUrl);
   const registerSupplier = useMutation(api.auth.registerSupplier);
@@ -91,13 +92,57 @@ export default function SupplierSignupForm() {
     }
   };
 
-  if (categories === undefined) {
+  // Check if user is already registered
+  if (currentUser === undefined || categories === undefined) {
     return (
       <Card>
         <CardContent className="py-12">
           <div className="flex items-center justify-center">
             <Loader2Icon className="h-8 w-8 animate-spin text-primary" />
           </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // If user already has an account, redirect to dashboard
+  if (currentUser !== null) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Already Registered</CardTitle>
+          <CardDescription>
+            You have already completed registration with this account
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Your account type: <span className="font-semibold capitalize">{currentUser.accountType}</span>
+          </p>
+          {currentUser.verificationStatus === "pending" && (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <p className="text-sm text-yellow-800">
+                Your account is pending admin verification. You'll be notified once approved.
+              </p>
+            </div>
+          )}
+          {currentUser.verificationStatus === "approved" && (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <p className="text-sm text-green-800">
+                Your account is verified and active!
+              </p>
+            </div>
+          )}
+          {currentUser.verificationStatus === "rejected" && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <p className="text-sm text-red-800">
+                Your account verification was rejected. Please contact support.
+              </p>
+            </div>
+          )}
+          <Button onClick={() => navigate("/dashboard")} className="w-full">
+            Go to Dashboard
+          </Button>
         </CardContent>
       </Card>
     );
