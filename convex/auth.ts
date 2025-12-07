@@ -80,14 +80,37 @@ export const registerHospital = mutation({
     }
 
     // Check if email already exists
-    const existingHospital = await ctx.db
+    const existingEmail = await ctx.db
       .query("hospitals")
       .withIndex("by_email", (q) => q.eq("email", args.email))
       .first();
 
-    if (existingHospital) {
+    if (existingEmail) {
       throw new ConvexError({
         message: "A hospital with this email already exists",
+        code: "CONFLICT",
+      });
+    }
+
+    // Check if phone already exists
+    const allHospitals = await ctx.db.query("hospitals").collect();
+    const existingPhone = allHospitals.find((h) => h.phone === args.phone);
+
+    if (existingPhone) {
+      throw new ConvexError({
+        message: "A hospital with this phone number already exists",
+        code: "CONFLICT",
+      });
+    }
+
+    // Check if hospital name already exists
+    const existingName = allHospitals.find(
+      (h) => h.name.toLowerCase() === args.hospitalName.toLowerCase()
+    );
+
+    if (existingName) {
+      throw new ConvexError({
+        message: "A hospital with this name already exists",
         code: "CONFLICT",
       });
     }
@@ -168,14 +191,37 @@ export const registerSupplier = mutation({
     }
 
     // Check if email already exists
-    const existingSupplier = await ctx.db
+    const existingEmail = await ctx.db
       .query("suppliers")
       .withIndex("by_email", (q) => q.eq("email", args.email))
       .first();
 
-    if (existingSupplier) {
+    if (existingEmail) {
       throw new ConvexError({
         message: "A supplier with this email already exists",
+        code: "CONFLICT",
+      });
+    }
+
+    // Check if phone already exists
+    const allSuppliers = await ctx.db.query("suppliers").collect();
+    const existingPhone = allSuppliers.find((s) => s.phone === args.phone);
+
+    if (existingPhone) {
+      throw new ConvexError({
+        message: "A supplier with this phone number already exists",
+        code: "CONFLICT",
+      });
+    }
+
+    // Check if company name already exists
+    const existingCompany = allSuppliers.find(
+      (s) => s.companyName.toLowerCase() === args.companyName.toLowerCase()
+    );
+
+    if (existingCompany) {
+      throw new ConvexError({
+        message: "A supplier with this company name already exists",
         code: "CONFLICT",
       });
     }
