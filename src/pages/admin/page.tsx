@@ -14,6 +14,7 @@ import {
   AlertCircleIcon,
   FileTextIcon,
   CoinsIcon,
+  PackageIcon,
 } from "lucide-react";
 
 export default function AdminPage() {
@@ -228,6 +229,12 @@ function AdminContent() {
               <Button className="w-full" variant="outline">
                 <TruckIcon className="mr-2 h-4 w-4" />
                 Manage Suppliers
+              </Button>
+            </Link>
+            <Link to="/admin/categories">
+              <Button className="w-full" variant="outline">
+                <PackageIcon className="mr-2 h-4 w-4" />
+                Manage Categories
               </Button>
             </Link>
             <Link to="/admin/credit-packages">

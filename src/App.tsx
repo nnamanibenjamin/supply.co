@@ -27,6 +27,7 @@ import AdminCreditPackagesPage from "./pages/admin/credit-packages/page.tsx";
 import AdminUsersPage from "./pages/admin/users/page.tsx";
 import AdminRfqsPage from "./pages/admin/rfqs/page.tsx";
 import AdminReportsPage from "./pages/admin/reports/page.tsx";
+import AdminCategoriesPage from "./pages/admin/categories/page.tsx";
 import DashboardReportsPage from "./pages/dashboard/reports/page.tsx";
 
 export default function App() {
@@ -61,6 +62,7 @@ export default function App() {
           <Route path="/admin/users" element={<AdminUsersPage />} />
           <Route path="/admin/rfqs" element={<AdminRfqsPage />} />
           <Route path="/admin/reports" element={<AdminReportsPage />} />
+          <Route path="/admin/categories" element={<AdminCategoriesPage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
