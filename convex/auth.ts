@@ -167,6 +167,7 @@ export const registerSupplier = mutation({
     email: v.string(),
     cr12StorageId: v.optional(v.id("_storage")),
     categories: v.array(v.id("categories")),
+    products: v.array(v.id("products")),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -253,6 +254,16 @@ export const registerSupplier = mutation({
 
     // Link user to supplier
     await ctx.db.patch(userId, { supplierId });
+
+    // Add selected products to supplier's product list
+    await Promise.all(
+      args.products.map(async (productId) => {
+        await ctx.db.insert("supplierProducts", {
+          supplierId,
+          productId,
+        });
+      })
+    );
 
     return { userId, supplierId };
   },

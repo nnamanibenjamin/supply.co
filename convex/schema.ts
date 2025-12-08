@@ -74,26 +74,42 @@ export default defineSchema({
   products: defineTable({
     name: v.string(),
     categoryId: v.id("categories"),
-    supplierId: v.id("suppliers"),
     brand: v.optional(v.string()),
     modelSku: v.optional(v.string()),
-    unit: v.string(),
-    defaultUnitPrice: v.number(),
-    moq: v.number(),
-    deliveryTime: v.string(),
-    countryOfOrigin: v.optional(v.string()),
-    warranty: v.optional(v.string()),
-    imageStorageIds: v.array(v.id("_storage")),
+    imageStorageId: v.optional(v.id("_storage")),
     description: v.optional(v.string()),
     isActive: v.boolean(),
   })
     .searchIndex("search_name", {
       searchField: "name",
-      filterFields: ["categoryId", "supplierId", "isActive"],
+      filterFields: ["categoryId", "isActive"],
     })
     .index("by_category", ["categoryId", "isActive"])
-    .index("by_supplier", ["supplierId", "isActive"])
     .index("by_active", ["isActive"]),
+
+  supplierProducts: defineTable({
+    supplierId: v.id("suppliers"),
+    productId: v.id("products"),
+  })
+    .index("by_supplier", ["supplierId"])
+    .index("by_product", ["productId"])
+    .index("by_supplier_and_product", ["supplierId", "productId"]),
+
+  productRequests: defineTable({
+    supplierId: v.id("suppliers"),
+    productName: v.string(),
+    categoryId: v.id("categories"),
+    description: v.optional(v.string()),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("approved"),
+      v.literal("rejected")
+    ),
+    adminNotes: v.optional(v.string()),
+    createdProductId: v.optional(v.id("products")),
+  })
+    .index("by_supplier", ["supplierId"])
+    .index("by_status", ["status"]),
 
   rfqs: defineTable({
     hospitalId: v.id("hospitals"),
