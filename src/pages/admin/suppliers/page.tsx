@@ -69,7 +69,7 @@ export default function AdminSuppliersPage() {
 }
 
 function SuppliersContent() {
-  const currentUser = useQuery(api.auth.getCurrentUser);
+  const currentUser = useQuery(api.registration.getCurrentUser);
   const [selectedStatus, setSelectedStatus] = useState<"pending" | "approved" | "rejected">("pending");
   const isAdmin = currentUser?.accountType === "admin";
   const suppliers = useQuery(api.admin.listSuppliers, isAdmin ? { status: selectedStatus } : "skip");

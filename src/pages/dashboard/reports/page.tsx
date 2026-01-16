@@ -103,7 +103,7 @@ export default function DashboardReportsPage() {
 }
 
 function ReportsContent() {
-  const currentUser = useQuery(api.auth.getCurrentUser);
+  const currentUser = useQuery(api.registration.getCurrentUser);
 
   if (currentUser === undefined) {
     return <Skeleton className="h-96 w-full" />;

@@ -69,7 +69,7 @@ export default function AdminHospitalsPage() {
 }
 
 function HospitalsContent() {
-  const currentUser = useQuery(api.auth.getCurrentUser);
+  const currentUser = useQuery(api.registration.getCurrentUser);
   const [selectedStatus, setSelectedStatus] = useState<"pending" | "approved" | "rejected">("pending");
   const isAdmin = currentUser?.accountType === "admin";
   const hospitals = useQuery(api.admin.listHospitals, isAdmin ? { status: selectedStatus } : "skip");

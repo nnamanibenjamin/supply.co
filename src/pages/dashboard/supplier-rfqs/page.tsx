@@ -66,7 +66,7 @@ export default function SupplierRFQsPage() {
 }
 
 function RFQsContent() {
-  const currentUser = useQuery(api.auth.getCurrentUser);
+  const currentUser = useQuery(api.registration.getCurrentUser);
   const rfqs = useQuery(api.rfqs.getAvailableRFQs);
 
   if (currentUser === undefined || rfqs === undefined) {

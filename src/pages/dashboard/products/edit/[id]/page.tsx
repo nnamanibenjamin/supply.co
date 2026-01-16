@@ -93,9 +93,9 @@ function EditProductForm() {
   const [imageIds, setImageIds] = useState<Id<"_storage">[]>([]);
 
   const categories = useQuery(api.categories.getActiveCategories);
-  const currentUser = useQuery(api.auth.getCurrentUser);
+  const currentUser = useQuery(api.registration.getCurrentUser);
   const product = useQuery(api.products.getProduct, id ? { productId: id as Id<"products"> } : "skip");
-  const generateUploadUrl = useMutation(api.auth.generateUploadUrl);
+  const generateUploadUrl = useMutation(api.registration.generateUploadUrl);
   const updateProduct = useMutation(api.products.updateProduct);
 
   const form = useForm<FormData>({

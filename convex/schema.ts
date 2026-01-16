@@ -1,24 +1,28 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
+import { authTables } from "@convex-dev/auth/server";
 
 export default defineSchema({
+  ...authTables,
   users: defineTable({
-    tokenIdentifier: v.string(),
-    name: v.string(),
-    email: v.string(),
-    phone: v.string(),
-    accountType: v.union(
+    // Required by Convex Auth
+    email: v.optional(v.string()),
+    // Made optional for Convex Auth - filled in during registration
+    tokenIdentifier: v.optional(v.string()),
+    name: v.optional(v.string()),
+    phone: v.optional(v.string()),
+    accountType: v.optional(v.union(
       v.literal("hospital"),
       v.literal("supplier"),
       v.literal("hospital_staff"),
       v.literal("admin")
-    ),
-    verificationStatus: v.union(
+    )),
+    verificationStatus: v.optional(v.union(
       v.literal("pending"),
       v.literal("approved"),
       v.literal("rejected")
-    ),
-    isActive: v.boolean(),
+    )),
+    isActive: v.optional(v.boolean()),
     hospitalId: v.optional(v.id("hospitals")),
     supplierId: v.optional(v.id("suppliers")),
   })

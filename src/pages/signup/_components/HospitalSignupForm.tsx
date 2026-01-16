@@ -28,9 +28,9 @@ export default function HospitalSignupForm() {
   const [uploading, setUploading] = useState(false);
   const [medicalLicenseId, setMedicalLicenseId] = useState<Id<"_storage"> | null>(null);
   
-  const currentUser = useQuery(api.auth.getCurrentUser);
-  const generateUploadUrl = useMutation(api.auth.generateUploadUrl);
-  const registerHospital = useMutation(api.auth.registerHospital);
+  const currentUser = useQuery(api.registration.getCurrentUser);
+  const generateUploadUrl = useMutation(api.registration.generateUploadUrl);
+  const registerHospital = useMutation(api.registration.registerHospital);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),

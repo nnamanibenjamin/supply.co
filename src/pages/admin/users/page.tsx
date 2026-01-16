@@ -57,7 +57,7 @@ export default function AdminUsersPage() {
 }
 
 function UsersContent() {
-  const currentUser = useQuery(api.auth.getCurrentUser);
+  const currentUser = useQuery(api.registration.getCurrentUser);
   const isAdmin = currentUser?.accountType === "admin";
   const allUsers = useQuery(api.admin.listAllUsers, isAdmin ? {} : "skip");
   const toggleUserActive = useMutation(api.admin.toggleUserActive);

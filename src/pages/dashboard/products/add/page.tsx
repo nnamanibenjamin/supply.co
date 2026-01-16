@@ -92,8 +92,8 @@ function AddProductForm() {
   const [imageIds, setImageIds] = useState<Id<"_storage">[]>([]);
 
   const categories = useQuery(api.categories.getActiveCategories);
-  const currentUser = useQuery(api.auth.getCurrentUser);
-  const generateUploadUrl = useMutation(api.auth.generateUploadUrl);
+  const currentUser = useQuery(api.registration.getCurrentUser);
+  const generateUploadUrl = useMutation(api.registration.generateUploadUrl);
   const addProduct = useMutation(api.products.addProduct);
 
   const form = useForm<FormData>({

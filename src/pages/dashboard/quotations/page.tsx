@@ -68,7 +68,7 @@ export default function QuotationsPage() {
 }
 
 function QuotationsContent() {
-  const currentUser = useQuery(api.auth.getCurrentUser);
+  const currentUser = useQuery(api.registration.getCurrentUser);
   const [selectedTab, setSelectedTab] = useState("all");
 
   const allQuotations = useQuery(api.quotations.getSupplierQuotations, {});

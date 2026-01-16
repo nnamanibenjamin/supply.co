@@ -66,7 +66,7 @@ export default function HospitalRFQsPage() {
 }
 
 function RFQsContent() {
-  const currentUser = useQuery(api.auth.getCurrentUser);
+  const currentUser = useQuery(api.registration.getCurrentUser);
   const rfqs = useQuery(api.rfqs.getHospitalRFQs);
 
   if (currentUser === undefined || rfqs === undefined) {

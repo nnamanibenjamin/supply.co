@@ -58,7 +58,7 @@ export default function DashboardPage() {
 }
 
 function DashboardContent() {
-  const currentUser = useQuery(api.auth.getCurrentUser);
+  const currentUser = useQuery(api.registration.getCurrentUser);
 
   if (currentUser === undefined) {
     return (

@@ -23,7 +23,7 @@ type CategoryForm = {
 };
 
 export default function AdminCategoriesPage() {
-  const currentUser = useQuery(api.auth.getCurrentUser);
+  const currentUser = useQuery(api.registration.getCurrentUser);
   const categories = useQuery(
     api.categories.listAll,
     currentUser?.accountType === "admin" ? {} : "skip"

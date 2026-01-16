@@ -53,7 +53,7 @@ export default function SignupPage() {
               <CardHeader className="text-center">
                 <CardTitle>Sign In to Continue</CardTitle>
                 <CardDescription>
-                  Please sign in with Hercules Auth to create your account
+                  Please sign in to create your account
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex justify-center">

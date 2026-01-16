@@ -40,7 +40,7 @@ export default function SupplierProductsPage() {
             <div className="h-8 w-8 rounded bg-primary flex items-center justify-center">
               <span className="text-primary-foreground font-bold text-lg">S</span>
             </div>
-            <span className="text-xl font-bold">saline.co.ke</span>
+            <span className="text-xl font-bold">supply.co.ke</span>
           </Link>
           <Link to="/dashboard">
             <Button variant="ghost">Dashboard</Button>
@@ -53,7 +53,7 @@ export default function SupplierProductsPage() {
           <Card className="max-w-md mx-auto">
             <CardHeader className="text-center">
               <CardTitle>Sign In Required</CardTitle>
-              <CardDescription>Please sign in to manage your products</CardDescription>
+              <CardDescription>Please sign in to manage your product listings</CardDescription>
             </CardHeader>
             <CardContent className="flex justify-center">
               <SignInButton>
@@ -80,36 +80,36 @@ export default function SupplierProductsPage() {
 
 function ProductsContent() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [productToDelete, setProductToDelete] = useState<Id<"products"> | null>(null);
+  const [listingToDelete, setListingToDelete] = useState<Id<"supplierProducts"> | null>(null);
 
-  const currentUser = useQuery(api.auth.getCurrentUser);
-  const products = useQuery(api.products.getSupplierProducts);
-  const deleteProduct = useMutation(api.products.deleteProduct);
+  const currentUser = useQuery(api.registration.getCurrentUser);
+  const listings = useQuery(api.supplierProducts.getMyListings);
+  const deleteListing = useMutation(api.supplierProducts.deleteListing);
 
-  const handleDeleteClick = (productId: Id<"products">) => {
-    setProductToDelete(productId);
+  const handleDeleteClick = (listingId: Id<"supplierProducts">) => {
+    setListingToDelete(listingId);
     setDeleteDialogOpen(true);
   };
 
   const handleDeleteConfirm = async () => {
-    if (!productToDelete) return;
+    if (!listingToDelete) return;
 
     try {
-      await deleteProduct({ productId: productToDelete });
-      toast.success("Product deleted successfully");
+      await deleteListing({ supplierProductId: listingToDelete });
+      toast.success("Listing deleted successfully");
     } catch (error) {
       if (error instanceof Error) {
         toast.error(error.message);
       } else {
-        toast.error("Failed to delete product");
+        toast.error("Failed to delete listing");
       }
     } finally {
       setDeleteDialogOpen(false);
-      setProductToDelete(null);
+      setListingToDelete(null);
     }
   };
 
-  if (currentUser === undefined || products === undefined) {
+  if (currentUser === undefined || listings === undefined) {
     return (
       <div className="max-w-6xl mx-auto space-y-4">
         <Skeleton className="h-32 w-full" />
@@ -118,12 +118,19 @@ function ProductsContent() {
     );
   }
 
-  if (!currentUser || currentUser.accountType !== "supplier") {
+  if (!currentUser || 
+      (currentUser.accountType !== "supplier" && 
+       !(currentUser.accountType === "admin" && currentUser.supplier))) {
     return (
       <Card className="max-w-2xl mx-auto">
         <CardHeader>
           <CardTitle>Access Denied</CardTitle>
-          <CardDescription>Only suppliers can manage products</CardDescription>
+          <CardDescription>
+            Only suppliers can manage product listings.
+            {currentUser?.accountType === "admin" && !currentUser.supplier && (
+              " Please set up an admin supplier account in the admin panel first."
+            )}
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <Link to="/dashboard">
@@ -140,7 +147,7 @@ function ProductsContent() {
         <CardHeader>
           <CardTitle>Account Pending Verification</CardTitle>
           <CardDescription>
-            Your supplier account must be approved before you can manage products
+            Your supplier account must be approved before you can manage product listings
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -156,29 +163,29 @@ function ProductsContent() {
     <div className="max-w-6xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">My Products</h1>
-          <p className="text-muted-foreground">Manage your product catalog</p>
+          <h1 className="text-3xl font-bold">My Product Listings</h1>
+          <p className="text-muted-foreground">Manage your product listings and pricing</p>
         </div>
         <Link to="/dashboard/products/add">
           <Button>
             <PlusIcon className="h-4 w-4 mr-2" />
-            Add Product
+            Add Listing
           </Button>
         </Link>
       </div>
 
-      {products.length === 0 ? (
+      {listings.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
             <PackageIcon className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-            <h3 className="text-lg font-semibold mb-2">No Products Yet</h3>
+            <h3 className="text-lg font-semibold mb-2">No Listings Yet</h3>
             <p className="text-muted-foreground mb-4">
-              Start building your product catalog to receive RFQs
+              Create product listings to start receiving RFQs
             </p>
             <Link to="/dashboard/products/add">
               <Button>
                 <PlusIcon className="h-4 w-4 mr-2" />
-                Add Your First Product
+                Create Your First Listing
               </Button>
             </Link>
           </CardContent>
@@ -189,22 +196,22 @@ function ProductsContent() {
             <TableHeader>
               <TableRow>
                 <TableHead>Product</TableHead>
-                <TableHead>Category</TableHead>
                 <TableHead>Price</TableHead>
                 <TableHead>MOQ</TableHead>
+                <TableHead>Delivery</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {products.map((product) => (
-                <TableRow key={product._id}>
+              {listings.filter(l => l !== null).map((listing) => (
+                <TableRow key={listing.supplierProductId}>
                   <TableCell>
                     <div className="flex items-center gap-3">
-                      {product.imageStorageIds.length > 0 ? (
+                      {listing.imageUrl ? (
                         <img
-                          src={`${import.meta.env.VITE_CONVEX_URL}/api/storage/${product.imageStorageIds[0]}`}
-                          alt={product.name}
+                          src={listing.imageUrl}
+                          alt={listing.productName}
                           className="w-12 h-12 object-cover rounded"
                         />
                       ) : (
@@ -213,29 +220,31 @@ function ProductsContent() {
                         </div>
                       )}
                       <div>
-                        <p className="font-medium">{product.name}</p>
-                        {product.brand && (
-                          <p className="text-sm text-muted-foreground">{product.brand}</p>
+                        <p className="font-medium">{listing.productName}</p>
+                        {listing.brand && (
+                          <p className="text-sm text-muted-foreground">{listing.brand}</p>
                         )}
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell>{product.categoryName}</TableCell>
                   <TableCell>
-                    KES {product.defaultUnitPrice.toLocaleString()}
-                    <span className="text-muted-foreground text-sm">/{product.unit}</span>
+                    KES {listing.unitPrice.toLocaleString()}
+                    <span className="text-muted-foreground text-sm">/{listing.unit}</span>
                   </TableCell>
                   <TableCell>
-                    {product.moq} {product.unit}
+                    {listing.minimumOrderQuantity} {listing.unit}
                   </TableCell>
                   <TableCell>
-                    <Badge variant={product.isActive ? "default" : "secondary"}>
-                      {product.isActive ? "Active" : "Inactive"}
+                    {listing.deliveryTimeInDays} days
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={listing.isAvailable ? "default" : "secondary"}>
+                      {listing.isAvailable ? "Available" : "Unavailable"}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">
-                      <Link to={`/dashboard/products/edit/${product._id}`}>
+                      <Link to={`/dashboard/products/edit/${listing.supplierProductId}`}>
                         <Button variant="ghost" size="sm">
                           <EditIcon className="h-4 w-4" />
                         </Button>
@@ -244,7 +253,7 @@ function ProductsContent() {
                         variant="ghost" 
                         size="sm" 
                         className="text-destructive"
-                        onClick={() => handleDeleteClick(product._id)}
+                        onClick={() => handleDeleteClick(listing.supplierProductId)}
                       >
                         <TrashIcon className="h-4 w-4" />
                       </Button>
@@ -261,9 +270,9 @@ function ProductsContent() {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Product</AlertDialogTitle>
+            <AlertDialogTitle>Delete Listing</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this product? This action cannot be undone.
+              Are you sure you want to delete this listing? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

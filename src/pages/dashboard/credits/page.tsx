@@ -65,7 +65,7 @@ export default function CreditsPage() {
 }
 
 function CreditsContent() {
-  const currentUser = useQuery(api.auth.getCurrentUser);
+  const currentUser = useQuery(api.registration.getCurrentUser);
   const creditBalance = useQuery(api.credits.getCreditBalance);
   const packages = useQuery(api.credits.getPackages);
   const simulatePurchase = useMutation(api.credits.simulatePurchase);

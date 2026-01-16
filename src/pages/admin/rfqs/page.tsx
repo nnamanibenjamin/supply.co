@@ -56,7 +56,7 @@ export default function AdminRfqsPage() {
 }
 
 function RfqsContent() {
-  const currentUser = useQuery(api.auth.getCurrentUser);
+  const currentUser = useQuery(api.registration.getCurrentUser);
   const [selectedStatus, setSelectedStatus] = useState<"open" | "closed" | "fulfilled" | undefined>(
     undefined
   );

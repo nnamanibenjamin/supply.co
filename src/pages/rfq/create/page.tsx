@@ -92,7 +92,7 @@ function CreateRFQForm() {
   const productId = searchParams.get("productId");
 
   const categories = useQuery(api.categories.getActiveCategories);
-  const currentUser = useQuery(api.auth.getCurrentUser);
+  const currentUser = useQuery(api.registration.getCurrentUser);
   const product = useQuery(
     api.products.getProduct,
     productId ? { productId: productId as Id<"products"> } : "skip"

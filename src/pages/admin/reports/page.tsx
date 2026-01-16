@@ -98,7 +98,7 @@ export default function AdminReportsPage() {
 }
 
 function ReportsContent() {
-  const currentUser = useQuery(api.auth.getCurrentUser);
+  const currentUser = useQuery(api.registration.getCurrentUser);
   const [timeRange, setTimeRange] = useState(30);
   const isAdmin = currentUser?.accountType === "admin";
   const stats = useQuery(api.reports.getAdminDashboardStats, isAdmin ? {} : "skip");

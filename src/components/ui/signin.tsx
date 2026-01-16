@@ -1,48 +1,32 @@
-import { forwardRef, useCallback, useEffect } from "react";
+import { forwardRef, useState } from "react";
 import { type VariantProps } from "class-variance-authority";
 import { Loader2, LogIn, LogOut } from "lucide-react";
-import { toast } from "sonner";
-import { useAuth } from "@/hooks/use-auth.ts";
+import { useAuthActions } from "@convex-dev/auth/react";
+import { useConvexAuth } from "convex/react";
 import { Button, buttonVariants } from "@/components/ui/button.tsx";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog.tsx";
+import { Input } from "@/components/ui/input.tsx";
+import { Label } from "@/components/ui/label.tsx";
+import { toast } from "sonner";
 
 export interface SignInButtonProps
   extends Omit<React.ComponentProps<"button">, "onClick">,
     VariantProps<typeof buttonVariants> {
-  /**
-   * Custom onClick handler that runs before authentication action
-   */
   onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
-  /**
-   * Whether to show icons in the button
-   * @default true
-   */
   showIcon?: boolean;
-  /**
-   * Custom text for sign in state
-   * @default "Sign In"
-   */
   signInText?: string;
-  /**
-   * Custom text for sign out state
-   * @default "Sign Out"
-   */
   signOutText?: string;
-  /**
-   * Custom text for loading state
-   * @default "Signing In..." or "Signing Out..."
-   */
   loadingText?: string;
-  /**
-   * Whether to use the asChild pattern
-   * @default false
-   */
   asChild?: boolean;
 }
 
-/**
- * A button component that handles authentication sign in/out with proper loading states
- * and accessibility features.
- */
 export const SignInButton = forwardRef<HTMLButtonElement, SignInButtonProps>(
   (
     {
@@ -60,41 +44,50 @@ export const SignInButton = forwardRef<HTMLButtonElement, SignInButtonProps>(
     },
     ref,
   ) => {
-    const { isAuthenticated, signinRedirect, removeUser, isLoading, error } =
-      useAuth();
+    const { isAuthenticated, isLoading: authLoading } = useConvexAuth();
+    const { signIn, signOut } = useAuthActions();
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isSignUp, setIsSignUp] = useState(false);
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
 
-    useEffect(() => {
-      if (error) {
-        toast.error("Login error", {
-          description: error.message,
-        });
-        console.error("Login error", error);
+    const handleSignOut = async () => {
+      try {
+        await signOut();
+        toast.success("Signed out successfully");
+      } catch (err) {
+        console.error("Sign out error:", err);
+        toast.error("Failed to sign out");
       }
-    }, [error]);
+    };
 
-    const handleClick = useCallback(
-      async (event: React.MouseEvent<HTMLButtonElement>) => {
-        // Run custom onClick first
-        onClick?.(event);
+    const handleSubmit = async (e: React.FormEvent) => {
+      e.preventDefault();
+      setIsSubmitting(true);
 
-        try {
-          if (isAuthenticated) {
-            await removeUser();
-          } else {
-            await signinRedirect();
-          }
-        } catch (err) {
-          console.error("Authentication error:", err);
-          // Don't prevent the default here as the auth library handles errors
-        }
-      },
-      [isAuthenticated, removeUser, signinRedirect, onClick],
-    );
+      try {
+        const formData = new FormData();
+        formData.set("email", email);
+        formData.set("password", password);
+        formData.set("flow", isSignUp ? "signUp" : "signIn");
 
+        await signIn("password", formData);
+        setIsDialogOpen(false);
+        setEmail("");
+        setPassword("");
+        toast.success(isSignUp ? "Account created successfully" : "Signed in successfully");
+      } catch (err) {
+        console.error("Auth error:", err);
+        toast.error(isSignUp ? "Failed to create account" : "Invalid email or password");
+      } finally {
+        setIsSubmitting(false);
+      }
+    };
+
+    const isLoading = authLoading || isSubmitting;
     const isDisabled = disabled || isLoading;
-    const defaultLoadingText = isAuthenticated
-      ? "Signing Out..."
-      : "Signing In...";
+    const defaultLoadingText = isAuthenticated ? "Signing Out..." : "Signing In...";
     const currentLoadingText = loadingText || defaultLoadingText;
 
     const buttonText = isLoading
@@ -111,26 +104,94 @@ export const SignInButton = forwardRef<HTMLButtonElement, SignInButtonProps>(
       <LogIn className="size-4" />
     );
 
+    if (isAuthenticated) {
+      return (
+        <Button
+          ref={ref}
+          onClick={handleSignOut}
+          disabled={isDisabled}
+          variant={variant}
+          size={size}
+          className={className}
+          asChild={asChild}
+          aria-label="Sign out of your account"
+          {...props}
+        >
+          {showIcon && icon}
+          {buttonText}
+        </Button>
+      );
+    }
+
     return (
-      <Button
-        ref={ref}
-        onClick={handleClick}
-        disabled={isDisabled}
-        variant={variant}
-        size={size}
-        className={className}
-        asChild={asChild}
-        aria-label={
-          isAuthenticated
-            ? "Sign out of your account"
-            : "Sign in to your account"
-        }
-        aria-describedby={error ? "auth-error" : undefined}
-        {...props}
-      >
-        {showIcon && icon}
-        {buttonText}
-      </Button>
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogTrigger asChild>
+          <Button
+            ref={ref}
+            disabled={isDisabled}
+            variant={variant}
+            size={size}
+            className={className}
+            asChild={asChild}
+            aria-label="Sign in to your account"
+            {...props}
+          >
+            {showIcon && icon}
+            {buttonText}
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{isSignUp ? "Create Account" : "Sign In"}</DialogTitle>
+            <DialogDescription>
+              {isSignUp
+                ? "Create a new account to get started"
+                : "Enter your credentials to sign in"}
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                disabled={isSubmitting}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                disabled={isSubmitting}
+                minLength={8}
+              />
+            </div>
+            <Button type="submit" className="w-full" disabled={isSubmitting}>
+              {isSubmitting && <Loader2 className="size-4 mr-2 animate-spin" />}
+              {isSignUp ? "Create Account" : "Sign In"}
+            </Button>
+            <p className="text-center text-sm text-muted-foreground">
+              {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
+              <button
+                type="button"
+                className="text-primary hover:underline"
+                onClick={() => setIsSignUp(!isSignUp)}
+              >
+                {isSignUp ? "Sign in" : "Sign up"}
+              </button>
+            </p>
+          </form>
+        </DialogContent>
+      </Dialog>
     );
   },
 );

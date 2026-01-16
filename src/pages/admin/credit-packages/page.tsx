@@ -70,7 +70,7 @@ export default function AdminCreditPackagesPage() {
 }
 
 function CreditPackagesContent() {
-  const currentUser = useQuery(api.auth.getCurrentUser);
+  const currentUser = useQuery(api.registration.getCurrentUser);
   const isAdmin = currentUser?.accountType === "admin";
   const packages = useQuery(api.admin.listAllCreditPackages, isAdmin ? {} : "skip");
   const createPackage = useMutation(api.admin.createCreditPackage);

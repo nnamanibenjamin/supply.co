@@ -30,10 +30,10 @@ export default function SupplierSignupForm() {
   const [uploading, setUploading] = useState(false);
   const [cr12Id, setCr12Id] = useState<Id<"_storage"> | null>(null);
   
-  const currentUser = useQuery(api.auth.getCurrentUser);
+  const currentUser = useQuery(api.registration.getCurrentUser);
   const categories = useQuery(api.categories.getActiveCategories);
-  const generateUploadUrl = useMutation(api.auth.generateUploadUrl);
-  const registerSupplier = useMutation(api.auth.registerSupplier);
+  const generateUploadUrl = useMutation(api.registration.generateUploadUrl);
+  const registerSupplier = useMutation(api.registration.registerSupplier);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),

@@ -61,7 +61,7 @@ export default function TransactionHistoryPage() {
 }
 
 function TransactionHistoryContent() {
-  const currentUser = useQuery(api.auth.getCurrentUser);
+  const currentUser = useQuery(api.registration.getCurrentUser);
   const transactions = useQuery(api.credits.getTransactionHistory, {});
 
   if (currentUser === undefined || transactions === undefined) {

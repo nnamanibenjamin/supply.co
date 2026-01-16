@@ -22,8 +22,8 @@ type FormData = z.infer<typeof formSchema>;
 
 export default function JoinHospitalForm() {
   const navigate = useNavigate();
-  const currentUser = useQuery(api.auth.getCurrentUser);
-  const registerHospitalStaff = useMutation(api.auth.registerHospitalStaff);
+  const currentUser = useQuery(api.registration.getCurrentUser);
+  const registerHospitalStaff = useMutation(api.registration.registerHospitalStaff);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),

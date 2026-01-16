@@ -18,6 +18,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select.tsx";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group.tsx";
+import { Checkbox } from "@/components/ui/checkbox.tsx";
 import { Skeleton } from "@/components/ui/skeleton.tsx";
 import { SignInButton } from "@/components/ui/signin.tsx";
 import { Badge } from "@/components/ui/badge.tsx";
@@ -26,10 +28,13 @@ import { Loader2Icon } from "lucide-react";
 import type { Id } from "@/convex/_generated/dataModel.d.ts";
 
 const formSchema = z.object({
-  productId: z.string().optional(),
+  supplierProductId: z.string().optional(),
   unitPrice: z.number().min(0, "Price must be positive"),
   deliveryTime: z.string().min(1, "Delivery time is required"),
   notes: z.string().optional(),
+  paymentTerms: z.enum(["cash", "installment", "both"]),
+  isNegotiable: z.boolean(),
+  installmentAvailable: z.boolean(),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -43,7 +48,7 @@ export default function SubmitQuotePage() {
             <div className="h-8 w-8 rounded bg-primary flex items-center justify-center">
               <span className="text-primary-foreground font-bold text-lg">S</span>
             </div>
-            <span className="text-xl font-bold">saline.co.ke</span>
+            <span className="text-xl font-bold">supply.co.ke</span>
           </Link>
           <Link to="/dashboard/supplier-rfqs">
             <Button variant="ghost">Back to RFQs</Button>
@@ -85,27 +90,30 @@ function SubmitQuoteForm() {
   const navigate = useNavigate();
 
   const rfq = useQuery(api.rfqs.getRFQ, id ? { rfqId: id as Id<"rfqs"> } : "skip");
-  const currentUser = useQuery(api.auth.getCurrentUser);
-  const supplierProducts = useQuery(api.products.getSupplierProducts);
+  const currentUser = useQuery(api.registration.getCurrentUser);
+  const supplierProducts = useQuery(api.supplierProducts.getMyListings);
   const submitQuotation = useMutation(api.quotations.submitQuotation);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      productId: "",
+      supplierProductId: "",
       unitPrice: 0,
       deliveryTime: "",
       notes: "",
+      paymentTerms: "both",
+      isNegotiable: false,
+      installmentAvailable: false,
     },
   });
 
-  const selectedProductId = form.watch("productId");
-  const selectedProduct = supplierProducts?.find((p) => p._id === selectedProductId);
+  const selectedProductId = form.watch("supplierProductId");
+  const selectedProduct = supplierProducts?.find((p) => p.supplierProductId === selectedProductId);
 
   // Auto-fill unit price when product is selected
   useState(() => {
     if (selectedProduct) {
-      form.setValue("unitPrice", selectedProduct.defaultUnitPrice);
+      form.setValue("unitPrice", selectedProduct.unitPrice);
       form.setValue("deliveryTime", selectedProduct.deliveryTime);
     }
   });
@@ -116,10 +124,15 @@ function SubmitQuoteForm() {
     try {
       await submitQuotation({
         rfqId: id as Id<"rfqs">,
-        productId: data.productId ? (data.productId as Id<"products">) : undefined,
+        supplierProductId: data.supplierProductId && data.supplierProductId !== "custom" 
+          ? (data.supplierProductId as Id<"supplierProducts">) 
+          : undefined,
         unitPrice: data.unitPrice,
         deliveryTime: data.deliveryTime,
         notes: data.notes || undefined,
+        paymentTerms: data.paymentTerms,
+        isNegotiable: data.isNegotiable,
+        installmentAvailable: data.installmentAvailable,
       });
 
       toast.success("Quotation submitted successfully! The hospital will review your quote.");
@@ -157,12 +170,19 @@ function SubmitQuoteForm() {
     );
   }
 
-  if (!currentUser || currentUser.accountType !== "supplier") {
+  if (!currentUser || 
+      (currentUser.accountType !== "supplier" && 
+       !(currentUser.accountType === "admin" && currentUser.supplier))) {
     return (
       <Card className="max-w-2xl mx-auto">
         <CardHeader>
           <CardTitle>Access Denied</CardTitle>
-          <CardDescription>Only suppliers can submit quotations</CardDescription>
+          <CardDescription>
+            Only suppliers can submit quotations.
+            {currentUser?.accountType === "admin" && !currentUser.supplier && (
+              " Please set up an admin supplier account in the admin panel first."
+            )}
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <Link to="/dashboard">
@@ -202,6 +222,21 @@ function SubmitQuoteForm() {
               <p className="text-sm font-medium text-muted-foreground">Delivery Location</p>
               <p className="text-lg font-semibold">{rfq.deliveryLocation}</p>
             </div>
+            {rfq.expiryDate && (
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Expires On</p>
+                <p className="text-lg font-semibold">{new Date(rfq.expiryDate).toLocaleDateString()}</p>
+                <p className="text-xs text-muted-foreground">
+                  {Math.ceil((rfq.expiryDate - Date.now()) / (1000 * 60 * 60 * 24))} days remaining
+                </p>
+              </div>
+            )}
+            {rfq.preferredPaymentTerms && (
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Preferred Payment Terms</p>
+                <p className="text-lg font-semibold">{rfq.preferredPaymentTerms}</p>
+              </div>
+            )}
           </div>
 
           {rfq.specifications && (
@@ -233,7 +268,7 @@ function SubmitQuoteForm() {
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <FormField
                 control={form.control}
-                name="productId"
+                name="supplierProductId"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Select Product (Optional)</FormLabel>
@@ -246,8 +281,8 @@ function SubmitQuoteForm() {
                       <SelectContent>
                         <SelectItem value="custom">Custom Quotation</SelectItem>
                         {supplierProducts.map((product) => (
-                          <SelectItem key={product._id} value={product._id}>
-                            {product.name} - KES {product.defaultUnitPrice.toLocaleString()}
+                          <SelectItem key={product.supplierProductId} value={product.supplierProductId}>
+                            {product.productName} - KES {product.unitPrice.toLocaleString()}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -323,6 +358,97 @@ function SubmitQuoteForm() {
                   </FormItem>
                 )}
               />
+
+              <FormField
+                control={form.control}
+                name="paymentTerms"
+                render={({ field }) => (
+                  <FormItem className="space-y-3">
+                    <FormLabel>Payment Terms *</FormLabel>
+                    <FormControl>
+                      <RadioGroup
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        className="flex flex-col space-y-1"
+                      >
+                        <FormItem className="flex items-center space-x-3 space-y-0">
+                          <FormControl>
+                            <RadioGroupItem value="cash" />
+                          </FormControl>
+                          <FormLabel className="font-normal">
+                            Cash payment only
+                          </FormLabel>
+                        </FormItem>
+                        <FormItem className="flex items-center space-x-3 space-y-0">
+                          <FormControl>
+                            <RadioGroupItem value="installment" />
+                          </FormControl>
+                          <FormLabel className="font-normal">
+                            Installment payment only
+                          </FormLabel>
+                        </FormItem>
+                        <FormItem className="flex items-center space-x-3 space-y-0">
+                          <FormControl>
+                            <RadioGroupItem value="both" />
+                          </FormControl>
+                          <FormLabel className="font-normal">
+                            Both cash and installment accepted
+                          </FormLabel>
+                        </FormItem>
+                      </RadioGroup>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="grid md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="isNegotiable"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel>
+                          Price is negotiable
+                        </FormLabel>
+                        <FormDescription>
+                          Allow the hospital to negotiate the price
+                        </FormDescription>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="installmentAvailable"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel>
+                          Installment available
+                        </FormLabel>
+                        <FormDescription>
+                          Offer installment payment options
+                        </FormDescription>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+              </div>
 
               <div className="flex gap-4">
                 <Button

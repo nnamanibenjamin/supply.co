@@ -66,7 +66,7 @@ export default function AdminPage() {
 }
 
 function AdminContent() {
-  const currentUser = useQuery(api.auth.getCurrentUser);
+  const currentUser = useQuery(api.registration.getCurrentUser);
   
   // Only fetch stats if user is confirmed to be admin
   const isAdmin = currentUser?.accountType === "admin";
